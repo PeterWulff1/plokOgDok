@@ -1,0 +1,22 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<section class="profile-head">
+  <p class="kicker">Kun for redaktører</p>
+  <h1>Admin</h1>
+</section>
+
+<section class="section admin-narrow">
+  {% if disabled %}
+    <p class="notice">Admin er slået fra, fordi <code>ADMIN_PASSWORD</code> ikke er sat i <code>.env</code>.</p>
+  {% else %}
+    <form method="post" action="/admin/login" class="admin-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% if error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+      <button type="submit" class="btn">Log ind</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

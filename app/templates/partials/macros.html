@@ -1,0 +1,31 @@
+{# One attempt: the plain number, coloured by result. Screen readers get the word. #}
+{% macro attempt(a) -%}
+  {%- if a is none -%}
+    <span class="att none" aria-label="intet forsøg">·</span>
+  {%- elif a.is_successful -%}
+    <span class="att made" title="Ramt">{{ a.weight_kg }}<span class="visually-hidden"> ramt</span></span>
+  {%- else -%}
+    <span class="att miss" title="Ikke ramt">{{ a.weight_kg }}<span class="visually-hidden"> ikke ramt</span></span>
+  {%- endif -%}
+{%- endmacro %}
+
+{# Both disciplines for one entry. #}
+{% macro attempts(slots) -%}
+  <span class="att-group"><span class="att-label">T</span>{% for a in slots.snatch %}{{ attempt(a) }}{% endfor %}</span>
+  <span class="att-group"><span class="att-label">S</span>{% for a in slots.cj %}{{ attempt(a) }}{% endfor %}</span>
+{%- endmacro %}
+
+{# PR stamps for one entry. #}
+{% macro pr_stamps(r) -%}
+  {%- if r.is_debut -%}
+    <span class="stamp debut">Debut</span>
+  {%- elif r.is_pr_total -%}
+    <span class="stamp" title="Ny personlig rekord i total">PR total</span>
+  {%- elif r.is_pr_snatch and r.is_pr_cj -%}
+    <span class="stamp">PR T+S</span>
+  {%- elif r.is_pr_snatch -%}
+    <span class="stamp" title="Ny personlig rekord i træk">PR træk</span>
+  {%- elif r.is_pr_cj -%}
+    <span class="stamp" title="Ny personlig rekord i stød">PR stød</span>
+  {%- endif -%}
+{%- endmacro %}

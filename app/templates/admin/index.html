@@ -1,0 +1,133 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<section class="profile-head admin-head">
+  <div>
+    <p class="kicker">Redaktion</p>
+    <h1>Admin</h1>
+  </div>
+  <form method="post" action="/admin/logout">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="btn ghost">Log ud</button>
+  </form>
+</section>
+
+{% if flash %}
+  <p class="notice {% if flash.startswith('Ikke') %}error{% else %}ok{% endif %}" role="status">
+    {{ flash }}{% if saved_id %} <a href="/staevne/{{ saved_id }}">Se stævnet</a>{% endif %}
+  </p>
+{% endif %}
+
+<section class="section">
+  <div class="section-head">
+    <h2>Nyt stævne</h2>
+    <span class="kicker">Formular eller CSV</span>
+  </div>
+
+  {% if errors %}
+    <div class="notice error" role="alert">
+      <b>Noget skal rettes:</b>
+      <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/admin/forhaandsvis" enctype="multipart/form-data" class="admin-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+
+    <div class="field-row">
+      <div><label for="name">Stævnets navn</label>
+        <input id="name" name="name" value="{{ form.name }}" required maxlength="120"></div>
+      <div><label for="date">Dato</label>
+        <input id="date" name="date" type="date" value="{{ form.date }}" required></div>
+      <div><label for="location">Sted <span class="opt">(valgfrit)</span></label>
+        <input id="location" name="location" value="{{ form.location }}" maxlength="120"></div>
+    </div>
+
+    <fieldset class="csv-box">
+      <legend>Upload CSV</legend>
+      <p>Kolonner: <code>{{ columns|join("; ") }}</code>. Forsøg: <code>95</code> = ramt, <code>95x</code> = ikke ramt, tom = intet forsøg.
+        <a href="/admin/skabelon.csv">Hent skabelon</a></p>
+      <input type="file" name="csv_file" accept=".csv,text/csv">
+      <p class="opt">Vælger du en fil, ignoreres tabellen herunder.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Eller skriv resultaterne ind</legend>
+      <div class="table-wrap">
+        <table class="entry-grid" id="entry-grid">
+          <thead>
+            <tr>
+              <th>Navn</th><th>vlstat-id</th><th>Køn</th><th>Født</th><th>Klub</th><th>Klasse</th><th>Vægt</th>
+              <th>T1</th><th>T2</th><th>T3</th><th>S1</th><th>S2</th><th>S3</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}{% set i = loop.index0 %}
+            <tr>
+              {% for col in columns %}
+                <td><input name="rows-{{ i }}-{{ col }}" value="{{ r[col] }}" aria-label="{{ col }}, række {{ i + 1 }}"
+                    class="c-{{ loop.index0 }}"{% if col == "køn" %} maxlength="7"{% endif %}></td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn ghost" id="add-row">+ Tilføj række</button>
+    </fieldset>
+
+    <button type="submit" class="btn">Forhåndsvis</button>
+  </form>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Tilføjet her</h2>
+    <span class="kicker">Kun manuelle stævner kan slettes</span>
+  </div>
+  {% if competitions %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dato</th><th>Stævne</th><th class="n">Løftere</th><th></th></tr></thead>
+      <tbody>
+        {% for c in competitions %}
+        <tr>
+          <td class="tab">{{ c.date|dk_date }}</td>
+          <td><a class="name-link" href="/staevne/{{ c.id }}">{{ c.name }}</a>{% if c.location %}<span class="sub">{{ c.location }}</span>{% endif %}</td>
+          <td class="n">{{ c.lifters }}</td>
+          <td class="n">
+            <form method="post" action="/admin/slet/{{ c.id }}"
+                  data-confirm="Slet {{ c.name }}? Det kan ikke fortrydes."
+                  onsubmit="return confirm(this.dataset.confirm)">
+              <input type="hidden" name="csrf" value="{{ csrf }}">
+              <button type="submit" class="btn danger small">Slet</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p>Ingen stævner tilføjet manuelt endnu.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById("add-row").addEventListener("click", function () {
+    const body = document.querySelector("#entry-grid tbody");
+    const last = body.lastElementChild;
+    const index = body.children.length;
+    const row = last.cloneNode(true);
+    row.querySelectorAll("input").forEach(function (input) {
+      input.name = input.name.replace(/^rows-\d+-/, "rows-" + index + "-");
+      input.setAttribute("aria-label", input.getAttribute("aria-label").replace(/\d+$/, index + 1));
+      input.value = "";
+    });
+    body.appendChild(row);
+    row.querySelector("input").focus();
+  });
+</script>
+{% endblock %}

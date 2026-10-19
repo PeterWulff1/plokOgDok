@@ -1,0 +1,68 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<section class="profile-head">
+  <p class="kicker">Forhåndsvisning · intet er gemt endnu</p>
+  <h1>{{ form.name }}</h1>
+  <div class="facts">
+    <span><b>{{ form.date }}</b></span>
+    {% if form.location %}<span>{{ form.location }}</span>{% endif %}
+    <span><b>{{ rows|length }}</b> løftere</span>
+  </div>
+</section>
+
+<section class="section">
+  {% if blocked %}
+    <p class="notice error" role="alert">Nogle løftere kan ikke matches entydigt. Ret dem og prøv igen.</p>
+  {% endif %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Linje</th><th>Løfter</th><th>Match</th><th>Klasse</th><th class="n">Vægt</th><th>Træk</th><th>Stød</th></tr>
+      </thead>
+      <tbody>
+        {% for row, m in rows %}{% set e = row.entry %}
+        <tr>
+          <td class="tab">{{ row.line }}</td>
+          <td><b>{{ e.lifter_name }}</b><span class="sub">{{ e.club or "" }}{% if e.gender %} · {{ e.gender|gender }}{% endif %}</span></td>
+          <td>
+            {% if m.kind == "existing" %}
+              <span class="match ok">Findes</span>
+              <span class="sub"><a href="/loefter/{{ m.lifter_id }}" target="_blank" rel="noopener">{{ m.existing_name }}</a>{% if m.existing_club %} · {{ m.existing_club }}{% endif %}</span>
+            {% elif m.kind == "new" %}
+              <span class="match new">Ny løfter</span>
+            {% else %}
+              <span class="match problem">Ret</span><span class="sub">{{ m.message }}</span>
+            {% endif %}
+          </td>
+          <td>{{ e.weight_class or "Åben" }}</td>
+          <td class="n">{{ e.bodyweight|num(2) }}</td>
+          {% for disc in ["snatch", "cj"] %}
+          <td class="att-group">
+            {% for n in [1, 2, 3] %}
+              {% set a = e.attempts|selectattr("discipline", "equalto", disc)|selectattr("attempt_number", "equalto", n)|first %}
+              {% if a %}<span class="att {{ 'made' if a.is_successful else 'miss' }}">{{ a.weight_kg }}</span>{% else %}<span class="att none">·</span>{% endif %}
+            {% endfor %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="admin-actions">
+    <a class="btn ghost" href="/admin">Tilbage</a>
+    {% if not blocked %}
+    <form method="post" action="/admin/gem">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="name" value="{{ form.name }}">
+      <input type="hidden" name="date" value="{{ form.date }}">
+      <input type="hidden" name="location" value="{{ form.location }}">
+      <textarea name="csv_text" hidden>{{ csv_text }}</textarea>
+      <button type="submit" class="btn">Gem stævnet</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

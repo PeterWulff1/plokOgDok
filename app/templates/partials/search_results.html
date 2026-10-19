@@ -1,0 +1,11 @@
+{%- if q|length >= 2 -%}
+  {%- for l in lifters -%}
+    <a href="/loefter/{{ l.lifter_id }}">
+      <span class="who">{{ l.name }}</span>
+      <span class="meta">{{ l.club or "Ukendt klub" }} · sidst {{ l.last_date|dk_date }}</span>
+      <span class="pr">{{ l.pr_total|num }}<small>bedste total</small></span>
+    </a>
+  {%- else -%}
+    <div class="none">Ingen løftere matcher “{{ q }}”.</div>
+  {%- endfor -%}
+{%- endif -%}

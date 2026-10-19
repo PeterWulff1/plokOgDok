@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import attempts, pr_stamps %}
+
+{% block title %}{{ lifter.name }} · Pløk og Døk{% endblock %}
+{% block description %}{{ lifter.name }}: personlige rekorder, hit-rate og alle stævner siden {{ lifter.first_date.year }}.{% endblock %}
+{% block head %}
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-basic-dist-min@2.35.2/plotly-basic.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="profile-head">
+  <p class="kicker">{{ lifter.gender|gender }}{% if lifter.weight_class %} · {{ lifter.weight_class }}{% endif %}</p>
+  <h1>{{ lifter.name }}</h1>
+  <div class="facts">
+    <span>Klub <b>{{ lifter.club or "ukendt" }}</b></span>
+    {% if lifter.birth_year %}<span>Født <b>{{ lifter.birth_year }}</b></span>{% endif %}
+    <span><b>{{ lifter.competitions }}</b> stævner</span>
+    <span>Aktiv <b>{{ lifter.first_date|dk_date }} – {{ lifter.last_date|dk_date }}</b></span>
+  </div>
+
+  <div class="plates">
+    <div class="plate"><div class="kicker">Bedste træk</div><div class="value">{{ lifter.pr_snatch|num }}<small>kg</small></div></div>
+    <div class="plate"><div class="kicker">Bedste stød</div><div class="value">{{ lifter.pr_cj|num }}<small>kg</small></div></div>
+    <div class="plate"><div class="kicker">Bedste total</div><div class="value">{{ lifter.pr_total|num }}<small>kg</small></div></div>
+    <div class="plate brand"><div class="kicker">Bedste Sinclair</div><div class="value">{{ lifter.pr_sinclair|num(1) }}</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Udvikling</h2>
+    <span class="kicker">Bedste løft pr. stævne</span>
+  </div>
+  <div class="chart-box">
+    <div id="progression" class="chart" role="img"
+         aria-label="Graf over bedste træk og stød pr. stævne. Alle tal står også i stævnelisten nedenfor."></div>
+  </div>
+  <p class="chart-note">Koralfarvede ringe markerer nye personlige rekorder. Alle tal står i stævnelisten nedenfor.</p>
+</section>
+
+<div class="grid-2">
+  <section class="section">
+    <div class="section-head">
+      <h2>Hit-rate</h2>
+      <span class="kicker">{{ lifter.attempts|num }} forsøg i alt</span>
+    </div>
+    <div class="hitboard">
+      <div class="hd"></div><div class="hd">1. forsøg</div><div class="hd">2. forsøg</div><div class="hd">3. forsøg</div>
+      {% for disc in ["snatch", "cj"] %}
+        <div class="row-label">{{ disc|discipline }}</div>
+        {% for h in hit_rates[disc] %}
+          <div class="cell">
+            {% if h %}
+              <div class="pct">{{ h.hit_rate|pct }}</div>
+              <div class="of">{{ h.made }} af {{ h.attempts }}</div>
+              <div class="bar"><span style="width: {{ h.hit_rate|css_pct }}"></span></div>
+            {% else %}
+              <div class="pct">–</div><div class="of">ingen forsøg</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Skæve tal</h2>
+    </div>
+    <div class="oddities">
+      <div class="oddity">
+        <div class="big">{{ lifter.nerves_index|signed_pct|replace(" point", "") }}</div>
+        <div>
+          <h3>Nerver af stål</h3>
+          <p>Rammer {{ lifter.hit_rate_3rd|pct }} af sine 3. forsøg mod {{ lifter.hit_rate_1st|pct }} af åbningsforsøgene.</p>
+        </div>
+      </div>
+      {% for disc in ["snatch", "cj"] %}{% set j = jumps[disc][0] if jumps[disc] else none %}
+      {% if j %}
+      <div class="oddity">
+        <div class="big">+{{ j.jump_kg }}</div>
+        <div>
+          <h3>Yndlingsspring i {{ disc|discipline|lower }}</h3>
+          <p>Lægger oftest {{ j.jump_kg }} kg på mellem forsøg ({{ j.times }} gange). Det lykkes i {{ j.made }} af tilfældene.</p>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+      <div class="oddity">
+        <div class="big">{{ lifter.comebacks }}</div>
+        <div>
+          <h3>Comebacks</h3>
+          <p>Gange det er lykkedes at ramme 3. forsøg efter at have misset både 1. og 2. ({{ lifter.comeback_chances }} chancer).</p>
+        </div>
+      </div>
+      <div class="oddity">
+        <div class="big">{{ lifter.longest_made_streak }}</div>
+        <div>
+          <h3>Længste stime</h3>
+          <p>Flest ramte løft i træk, på tværs af stævner.</p>
+        </div>
+      </div>
+      <div class="oddity">
+        <div class="big">{{ lifter.snatch_cj_ratio|pct|replace(" %", "%") }}</div>
+        <div>
+          <h3>Træk mod stød</h3>
+          <p>Bedste træk er i snit så stor en del af bedste stød.</p>
+        </div>
+      </div>
+      <div class="oddity">
+        <div class="big">{% if lifter.stability_percentile is not none %}{{ lifter.stability_percentile|pct|replace(" %", "%") }}{% else %}–{% endif %}</div>
+        <div>
+          <h3>Stabilitet</h3>
+          {% if lifter.stability_percentile is not none %}
+            <p>Blandt de {{ lifter.stability_percentile|pct }} mest stabile løftere målt på, hvor lidt totalen svinger.</p>
+          {% else %}
+            <p>Kræver mindst fire stævner med en gyldig total.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Alle stævner</h2>
+    <span class="kicker">Grøn = ramt · rød = ikke ramt</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="hide-sm">Dato</th>
+          <th>Stævne</th>
+          <th class="n hide-sm">Vægt</th>
+          <th>Forsøg</th>
+          <th class="n">Total</th>
+          <th class="n hide-sm">Sinclair</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in history %}
+        <tr>
+          <td class="tab hide-sm">{{ r.date|dk_date }}</td>
+          <td>
+            <a class="name-link" href="/staevne/{{ r.competition_id }}">{{ r.competition }}</a>
+            <span class="sub"><span class="show-sm">{{ r.date|dk_date }} · </span>{{ r.club or "" }}{% if r.weight_class %} · {{ r.weight_class }}{% endif %}</span>
+          </td>
+          <td class="n hide-sm">{{ r.bodyweight|num(2) }}</td>
+          <td>{{ attempts(r.attempts) }}</td>
+          <td class="n"><b>{{ r.total|num }}</b></td>
+          <td class="n hide-sm">{{ r.sinclair|num(1) }}</td>
+          <td>{{ pr_stamps(r) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="chart-data" type="application/json">{{ chart|tojson }}</script>
+<script src="{{ url_for('static', path='js/progression.js') }}" defer></script>
+{% endblock %}

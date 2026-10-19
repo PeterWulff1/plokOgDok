@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pløk og Døk{% endblock %}</title>
+  <meta name="description" content="{% block description %}Statistik for dansk vægtløftning siden 2019: løfterprofiler, stævner, hit-rates og personlige rekorder.{% endblock %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&family=Big+Shoulders+Stencil+Display:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/site.css') }}">
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap">
+      <a class="logo" href="/">Pløk <span class="amp">og</span> Døk</a>
+      <nav aria-label="Hovedmenu">
+        <a href="/#staevner">Stævner</a>
+        <a href="/#sog">Søg løfter</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>Pløk og Døk · statistik for dansk vægtløftning</span>
+      <span>Resultater fra <a href="https://vlstat.dk" rel="noopener">vlstat.dk</a>. Total og Sinclair er regnet ud af os selv.</span>
+    </div>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

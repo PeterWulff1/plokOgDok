@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import attempts, pr_stamps %}
+
+{% block title %}{{ comp.name }} · Pløk og Døk{% endblock %}
+{% block description %}Resultater fra {{ comp.name }} {{ comp.date|dk_date }}: alle forsøg, dagens bedste Sinclair og nye personlige rekorder.{% endblock %}
+
+{% block content %}
+<section class="profile-head">
+  <p class="kicker">{{ comp.date|dk_date }}{% if comp.location %} · {{ comp.location }}{% endif %}</p>
+  <h1>{{ comp.name }}</h1>
+  <div class="facts">
+    <span><b>{{ comp.lifters }}</b> løftere</span>
+    <span><b>{{ comp.clubs }}</b> klubber</span>
+    <span><b>{{ comp.attempts }}</b> forsøg, <b>{{ comp.hit_rate|pct }}</b> ramt</span>
+    <span><b>{{ comp.lifters_with_pr }}</b> satte PR</span>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="section">
+    <div class="section-head">
+      <h2>Dagens bedste</h2>
+      <span class="kicker">Sinclair</span>
+    </div>
+    {% if top %}
+    <div class="podium">
+      {% for t in top %}
+      <a href="/loefter/{{ t.lifter_id }}">
+        <span class="rank">{{ loop.index }}</span>
+        <span><b>{{ t.name }}</b><span class="sub">{{ t.club or "" }} · {{ t.total }} kg ved {{ t.bodyweight|num(2) }} kg</span></span>
+        <span class="pts">{{ t.sinclair|num(1) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p>Ingen gyldige totaler ved dette stævne.</p>
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Klubberne</h2>
+      <span class="kicker">Samlet Sinclair</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Klub</th><th class="n">Løftere</th><th class="n">Bedste</th><th class="n">Samlet</th><th class="n">PR</th></tr></thead>
+        <tbody>
+          {% for c in clubs %}
+          <tr>
+            <td>{{ c.club or "Ukendt" }}</td>
+            <td class="n">{{ c.lifters }}</td>
+            <td class="n">{{ c.best_sinclair|num(1) }}</td>
+            <td class="n"><b>{{ c.sum_sinclair|num(1) }}</b></td>
+            <td class="n">{{ c.total_prs }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Resultater</h2>
+    <span class="kicker">Grøn = ramt · rød = ikke ramt</span>
+  </div>
+  {% for g in groups %}
+    <div class="class-head">
+      <h3>{{ g.weight_class or "Åben" }}</h3>
+      <span class="kicker">{{ g.gender|gender }}</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Løfter</th>
+            <th class="n hide-sm">Vægt</th>
+            <th>Forsøg</th>
+            <th class="n">Total</th>
+            <th class="n hide-sm">Sinclair</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in g.entries %}
+          <tr>
+            <td>
+              <a class="name-link" href="/loefter/{{ r.lifter_id }}">{{ r.name }}</a>
+              <span class="sub">{{ r.club or "" }}</span>
+            </td>
+            <td class="n hide-sm">{{ r.bodyweight|num(2) }}</td>
+            <td>{{ attempts(r.attempts) }}</td>
+            <td class="n"><b>{{ r.total|num }}</b></td>
+            <td class="n hide-sm">{{ r.sinclair|num(1) }}</td>
+            <td>{{ pr_stamps(r) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

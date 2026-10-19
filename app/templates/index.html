@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero" id="sog">
+  <p class="kicker">Dansk vægtløftning · siden {{ totals.since.year }}</p>
+  <h1>Hvem rammer, når det <em>gælder?</em></h1>
+  <p class="lede">Hvert eneste træk og stød fra danske stævner, samlet ét sted. Slå en løfter op, eller se hvad der skete i weekenden.</p>
+
+  <form class="search" action="/sog" role="search" onsubmit="return false">
+    <label for="q" class="visually-hidden">Søg efter løfter</label>
+    <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Søg efter løfter, f.eks. Siff"
+           hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results">
+    <div id="search-results" class="search-results" aria-live="polite"></div>
+  </form>
+
+  <div class="tally num">
+    <span><b>{{ totals.lifters|num }}</b> løftere</span>
+    <span><b>{{ totals.competitions|num }}</b> stævner</span>
+    <span><b>{{ totals.attempts|num }}</b> forsøg</span>
+  </div>
+</section>
+
+<section class="section" id="staevner">
+  <div class="section-head">
+    <h2>Seneste stævner</h2>
+    <span class="kicker">Nyeste først</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Dato</th>
+          <th>Stævne</th>
+          <th class="n">Løftere</th>
+          <th class="n hide-sm">Ramte</th>
+          <th class="hide-sm">Dagens bedste Sinclair</th>
+          <th class="n">PR'er</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in competitions %}
+        <tr>
+          <td class="tab">{{ c.date|dk_date }}</td>
+          <td><a class="name-link" href="/staevne/{{ c.competition_id }}">{{ c.name }}</a></td>
+          <td class="n">{{ c.lifters }}</td>
+          <td class="n hide-sm">{{ c.hit_rate|pct }}</td>
+          <td class="hide-sm">
+            {% if c.best_sinclair_lifter %}
+              <a href="/loefter/{{ c.best_sinclair_lifter_id }}">{{ c.best_sinclair_lifter }}</a>
+              <span class="sub tab">{{ c.best_sinclair|num(1) }} point</span>
+            {% else %}–{% endif %}
+          </td>
+          <td class="n">{{ c.lifters_with_pr }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
