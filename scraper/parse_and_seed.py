@@ -110,11 +110,13 @@ def seed(conn: psycopg.Connection, data: Dataset) -> None:
                 entry_id = conn.execute(
                     """
                     INSERT INTO vl.entry
-                        (lifter_id, competition_id, bodyweight, weight_class, club, reported_age)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                        (lifter_id, competition_id, bodyweight, weight_class, club, reported_age,
+                         reported_total)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (competition_id, lifter_id, weight_class) DO UPDATE
                     SET bodyweight = EXCLUDED.bodyweight, club = EXCLUDED.club,
-                        reported_age = EXCLUDED.reported_age
+                        reported_age = EXCLUDED.reported_age,
+                        reported_total = EXCLUDED.reported_total
                     RETURNING id
                     """,
                     (
@@ -124,6 +126,7 @@ def seed(conn: psycopg.Connection, data: Dataset) -> None:
                         e.weight_class,
                         e.club,
                         e.reported_age,
+                        e.reported_total,
                     ),
                 ).fetchone()[0]
                 # Replace attempts so corrections in the source are picked up.

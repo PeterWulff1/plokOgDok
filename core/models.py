@@ -57,6 +57,8 @@ class Entry(_Frozen):
     bodyweight: Decimal | None = Field(default=None, gt=0, lt=400, decimal_places=2)
     club: str | None = None
     reported_age: int | None = Field(default=None, ge=5, le=110)
+    # The total the source displays (vlstat: 0 = no total). Used only to detect bad data.
+    reported_total: int | None = Field(default=None, ge=0, lt=1000)
     attempts: tuple[Attempt, ...] = ()
 
     @model_validator(mode="after")

@@ -3,13 +3,12 @@
 {% block content %}
 <section class="hero" id="sog">
   <p class="kicker">Dansk vægtløftning · siden {{ totals.since.year }}</p>
-  <h1>Hvem rammer, når det <em>gælder?</em></h1>
-  <p class="lede">Hvert eneste træk og stød fra danske stævner, samlet ét sted. Slå en løfter op, eller se hvad der skete i weekenden.</p>
+  <h1>Find en løfter</h1>
 
   <form class="search" action="/sog" role="search" onsubmit="return false">
     <label for="q" class="visually-hidden">Søg efter løfter</label>
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
-           placeholder="Søg efter løfter, f.eks. Siff"
+           placeholder="Søg efter løfter, f.eks. Peter"
            hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results">
     <div id="search-results" class="search-results" aria-live="polite"></div>
   </form>
@@ -34,7 +33,8 @@
           <th>Stævne</th>
           <th class="n">Løftere</th>
           <th class="n hide-sm">Ramte</th>
-          <th class="hide-sm">Dagens bedste Sinclair</th>
+          <th class="hide-sm">Bedste kvinde</th>
+          <th class="hide-sm">Bedste mand</th>
           <th class="n">PR'er</th>
         </tr>
       </thead>
@@ -45,12 +45,14 @@
           <td><a class="name-link" href="/staevne/{{ c.competition_id }}">{{ c.name }}</a></td>
           <td class="n">{{ c.lifters }}</td>
           <td class="n hide-sm">{{ c.hit_rate|pct }}</td>
+          {% for g in ["f", "m"] %}
           <td class="hide-sm">
-            {% if c.best_sinclair_lifter %}
-              <a href="/loefter/{{ c.best_sinclair_lifter_id }}">{{ c.best_sinclair_lifter }}</a>
-              <span class="sub tab">{{ c.best_sinclair|num(1) }} point</span>
-            {% else %}–{% endif %}
+            {% if c["best_" ~ g ~ "_name"] %}
+              <a href="/loefter/{{ c['best_' ~ g ~ '_lifter_id'] }}">{{ c["best_" ~ g ~ "_name"] }}</a>
+              <span class="sub tab">{{ c["best_" ~ g ~ "_sinclair"]|num(1) }} Sinclair</span>
+            {% else %}<span class="sub">–</span>{% endif %}
           </td>
+          {% endfor %}
           <td class="n">{{ c.lifters_with_pr }}</td>
         </tr>
         {% endfor %}

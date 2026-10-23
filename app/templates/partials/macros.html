@@ -1,31 +1,45 @@
+{# Screen-reader text for a PR; the visual mark is the coral underline (.is-pr). #}
+{% macro pr_text(label="ny personlig rekord") -%}
+  <span class="visually-hidden"> ({{ label }})</span>
+{%- endmacro %}
+
 {# One attempt: the plain number, coloured by result. Screen readers get the word. #}
-{% macro attempt(a) -%}
+{% macro attempt(a, pr=false) -%}
   {%- if a is none -%}
     <span class="att none" aria-label="intet forsøg">·</span>
   {%- elif a.is_successful -%}
-    <span class="att made" title="Ramt">{{ a.weight_kg }}<span class="visually-hidden"> ramt</span></span>
+    <span class="att made{% if pr %} is-pr{% endif %}" title="{{ 'Ramt · ny personlig rekord' if pr else 'Ramt' }}">{{ a.weight_kg }}<span class="visually-hidden"> ramt</span>{% if pr %}{{ pr_text() }}{% endif %}</span>
   {%- else -%}
     <span class="att miss" title="Ikke ramt">{{ a.weight_kg }}<span class="visually-hidden"> ikke ramt</span></span>
   {%- endif -%}
 {%- endmacro %}
 
-{# Both disciplines for one entry. #}
-{% macro attempts(slots) -%}
-  <span class="att-group"><span class="att-label">T</span>{% for a in slots.snatch %}{{ attempt(a) }}{% endfor %}</span>
-  <span class="att-group"><span class="att-label">S</span>{% for a in slots.cj %}{{ attempt(a) }}{% endfor %}</span>
+{# Both disciplines for one entry. r carries best lifts and PR flags from v_entry_pr;
+   the PR mark goes on the made attempt that equals the record-setting best lift. #}
+{% macro attempts(r) -%}
+  {%- set pr_sn = r.is_pr_snatch and not r.is_debut -%}
+  {%- set pr_cj = r.is_pr_cj and not r.is_debut -%}
+  <span class="att-group"><span class="att-label">T</span>{% for a in r.attempts.snatch %}{{ attempt(a, pr_sn and a and a.is_successful and a.weight_kg == r.best_snatch) }}{% endfor %}</span>
+  <span class="att-group"><span class="att-label">S</span>{% for a in r.attempts.cj %}{{ attempt(a, pr_cj and a and a.is_successful and a.weight_kg == r.best_cj) }}{% endfor %}</span>
 {%- endmacro %}
 
-{# PR stamps for one entry. #}
-{% macro pr_stamps(r) -%}
-  {%- if r.is_debut -%}
-    <span class="stamp debut">Debut</span>
-  {%- elif r.is_pr_total -%}
-    <span class="stamp" title="Ny personlig rekord i total">PR total</span>
-  {%- elif r.is_pr_snatch and r.is_pr_cj -%}
-    <span class="stamp">PR T+S</span>
-  {%- elif r.is_pr_snatch -%}
-    <span class="stamp" title="Ny personlig rekord i træk">PR træk</span>
-  {%- elif r.is_pr_cj -%}
-    <span class="stamp" title="Ny personlig rekord i stød">PR stød</span>
+{# Total, underlined in coral when it beat every earlier total. #}
+{% macro total(r) -%}
+  {%- if r.is_pr_total and not r.is_debut -%}
+    <b class="is-pr" title="Ny rekord i total">{{ r.total|num }}{{ pr_text("ny rekord i total") }}</b>
+  {%- else -%}
+    <b>{{ r.total|num }}</b>
   {%- endif -%}
+{%- endmacro %}
+
+{# " · tvivlsomme data" when vlstat's numbers can't be right (v_entry_result.suspect_reason). #}
+{% macro suspect(r) -%}
+  {%- if r.suspect_reason == "total_mismatch" %} · <span class="suspect" title="vlstat.dk viser en anden total end forsøgene giver. Tæller ikke med i rekorder.">tvivlsomme data</span>
+  {%- elif r.suspect_reason %} · <span class="suspect" title="Et løft er fysisk umuligt for kropsvægten, sikkert en tastefejl hos vlstat.dk. Tæller ikke med i rekorder.">tvivlsomme data</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{# " · debut" for a lifter's first competition (where every result is trivially a PR). #}
+{% macro debut(r) -%}
+  {%- if r.is_debut %} · <span class="debut">debut</span>{% endif -%}
 {%- endmacro %}

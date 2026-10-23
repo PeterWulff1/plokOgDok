@@ -2,6 +2,32 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-20 — Suspect source data is kept but never becomes a record (migrations 011–012)
+
+**Decision:** `entry.reported_total` stores the total vlstat displays (raw source data, like `reported_age`). `v_entry_result.suspect_reason` flags:
+- `total_mismatch`: vlstat's total ≠ the total of its own attempts.
+- `impossible_lift`: snatch > 2.4 × bodyweight, C&J > 3.1 × bodyweight, or snatch > C&J + 25 kg.
+
+For flagged entries the view returns NULL for best lifts, total and Sinclair, so PRs, bests, rankings and club sums ignore them automatically. The attempts are still shown, with a "tvivlsomme data" note.
+
+**Reason:** A review found obvious typos at vlstat that became "records": a 51 kg masters lifter with a 245 kg snatch (the women's all-time best Sinclair, 416.5), and a 199 kg C&J where vlstat's own total implied 122 kg. A ratio rule like "C&J much bigger than snatch" was rejected because it also hits real beginners (e.g. 40/80 kg). Result: 11 of 9,107 entries are flagged.
+
+**Not flagged:** 74 entries under 30 kg bodyweight are real child lifters (age 6–8).
+
+**Also:** PR flags are cached as `mv_entry_pr` (migration 012), which cut the slowest pages from ~1 s. `scripts/check_site.py` visits every page and fails on errors or leaked template values. The first full run: 1,988 pages, 0 problems.
+
+## 2026-10-20 — PR marking: coral underline
+
+The raised "PR" text made tables uneven. A PR is now a thick coral underline under the record-setting number (no extra width). The legend above each table says "koral streg = PR".
+
+## 2026-10-20 — Best woman and best man instead of one "best Sinclair"
+
+**Decision:** The front page and competition pages show the best Sinclair per gender (migration 010, `v_competition_best_by_gender`, columns `best_f_*` / `best_m_*` in `mv_competition_summary`).
+
+**Reason:** In the 320 competitions with both genders, a man had the top Sinclair 311 times. Since 2024 the median Sinclair is 175 for women and 248 for men. Sinclair normalises each gender against its own records and isn't meant for comparing across genders.
+
+**Rejected for now:** Q-points (built for cross-gender comparison; the formula would first have to be verified against vlstat's Q-points page) and a "form of the day" score (result relative to the lifter's own record). Both could be added later.
+
 ## 2026-10-19 — Admin page; website URLs use our own IDs
 
 **Decision:** `/admin` (password `ADMIN_PASSWORD`) adds competitions from a form or a CSV file (`core/manual_entry.py` holds the column and attempt rules). The flow is always form → preview → save, so nothing is written before you've seen how every row matches a lifter. Public URLs changed from vlstat IDs to our own: `/loefter/{lifter.id}`, `/staevne/{competition.id}`.

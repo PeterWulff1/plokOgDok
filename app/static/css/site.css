@@ -22,7 +22,7 @@
   --series-cj: #C9873A;
 
   --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
-  --font-stencil: "Big Shoulders Stencil Display", "Big Shoulders Display", sans-serif;
+  --font-logo: "Anton", "Impact", "Arial Narrow Bold", sans-serif;
   --font-body: "Archivo", system-ui, sans-serif;
 
   --shadow-hard: 4px 4px 0 var(--ink);
@@ -88,13 +88,14 @@ h3 { font-size: 22px; }
   padding-top: 14px; padding-bottom: 12px;
 }
 .logo {
-  font-family: var(--font-stencil);
-  font-weight: 900;
-  font-size: clamp(30px, 5vw, 42px);
+  font-family: var(--font-logo);
+  font-weight: 400;  /* Anton only comes in one, very heavy, weight */
+  font-size: clamp(30px, 5vw, 44px);
   line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--burgundy);
   text-decoration: none;
-  letter-spacing: 0.02em;
 }
 .logo .amp { color: var(--ink); }
 .masthead nav { display: flex; gap: 20px; font-family: var(--font-display); font-weight: 700;
@@ -118,8 +119,7 @@ h3 { font-size: 22px; }
   color: var(--ink);
   max-width: 12ch;
 }
-.hero h1 em { font-style: normal; color: var(--burgundy); }
-.hero p.lede { max-width: 52ch; color: var(--ink-2); font-size: 18px; margin: 16px 0 24px; }
+.hero h1 { margin: 6px 0 28px; }
 
 .search { position: relative; max-width: 640px; }
 .search input {
@@ -169,7 +169,7 @@ th {
   border-bottom: 2px solid var(--ink); white-space: nowrap;
 }
 td { padding: 10px; border-bottom: 1px dashed var(--rule-soft); vertical-align: middle; }
-th.n, td.n { text-align: right; }
+th.n, td.n { text-align: right; white-space: nowrap; }
 tbody tr:hover td { background: rgba(243, 230, 213, 0.55); }
 td.tab { white-space: nowrap; }
 td .sub { display: block; font-size: 13px; color: var(--ink-3); }
@@ -187,13 +187,16 @@ td .sub { display: block; font-size: 13px; color: var(--ink-3); }
 .att-label { font: 700 12px var(--font-display); letter-spacing: 0.1em; color: var(--ink-3);
   text-transform: uppercase; margin-right: 2px; }
 
-/* PR stamp */
-.stamp {
-  display: inline-block; transform: rotate(-4deg);
-  font: 900 13px/1 var(--font-stencil); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--coral); border: 2px solid var(--coral); padding: 3px 5px 2px;
+/* PR: a thick coral underline under the number that set the record. Takes no width. */
+.is-pr {
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
 }
-.stamp.debut { color: var(--ink-3); border-color: var(--ink-3); }
+.debut { font-style: italic; }
+.suspect { color: var(--miss); border-bottom: 1px dotted currentColor; cursor: help; }
 
 /* --- Lifter profile ------------------------------------------------------------- */
 
@@ -252,6 +255,8 @@ td .sub { display: block; font-size: 13px; color: var(--ink-3); }
 .podium .rank { font: 900 28px/1 var(--font-display); color: var(--ink-3); }
 .podium a:first-child .rank { color: var(--coral); }
 .podium .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.podium-head { font-size: 18px; color: var(--ink-2); margin: 14px 0 6px; }
+.podium-head:first-of-type { margin-top: 0; }
 .podium .pts { font: 900 26px/1 var(--font-display); }
 
 /* --- Admin -------------------------------------------------------------------- */

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "partials/macros.html" import attempts, pr_stamps %}
+{% from "partials/macros.html" import attempts, total, debut, suspect %}
 
 {% block title %}{{ comp.name }} · Pløk og Døk{% endblock %}
 {% block description %}Resultater fra {{ comp.name }} {{ comp.date|dk_date }}: alle forsøg, dagens bedste Sinclair og nye personlige rekorder.{% endblock %}
@@ -22,9 +22,10 @@
       <h2>Dagens bedste</h2>
       <span class="kicker">Sinclair</span>
     </div>
-    {% if top %}
+    {% for g in ["F", "M"] if top[g] %}
+    <h3 class="podium-head">{{ g|gender }}</h3>
     <div class="podium">
-      {% for t in top %}
+      {% for t in top[g] %}
       <a href="/loefter/{{ t.lifter_id }}">
         <span class="rank">{{ loop.index }}</span>
         <span><b>{{ t.name }}</b><span class="sub">{{ t.club or "" }} · {{ t.total }} kg ved {{ t.bodyweight|num(2) }} kg</span></span>
@@ -34,7 +35,7 @@
     </div>
     {% else %}
       <p>Ingen gyldige totaler ved dette stævne.</p>
-    {% endif %}
+    {% endfor %}
   </section>
 
   <section class="section">
@@ -64,7 +65,7 @@
 <section class="section">
   <div class="section-head">
     <h2>Resultater</h2>
-    <span class="kicker">Grøn = ramt · rød = ikke ramt</span>
+    <span class="kicker">Grøn = ramt · rød = ikke ramt · koral streg = PR</span>
   </div>
   {% for g in groups %}
     <div class="class-head">
@@ -80,7 +81,6 @@
             <th>Forsøg</th>
             <th class="n">Total</th>
             <th class="n hide-sm">Sinclair</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -88,13 +88,12 @@
           <tr>
             <td>
               <a class="name-link" href="/loefter/{{ r.lifter_id }}">{{ r.name }}</a>
-              <span class="sub">{{ r.club or "" }}</span>
+              <span class="sub">{{ r.club or "" }}{{ debut(r) }}{{ suspect(r) }}</span>
             </td>
             <td class="n hide-sm">{{ r.bodyweight|num(2) }}</td>
-            <td>{{ attempts(r.attempts) }}</td>
-            <td class="n"><b>{{ r.total|num }}</b></td>
+            <td>{{ attempts(r) }}</td>
+            <td class="n">{{ total(r) }}</td>
             <td class="n hide-sm">{{ r.sinclair|num(1) }}</td>
-            <td>{{ pr_stamps(r) }}</td>
           </tr>
           {% endfor %}
         </tbody>

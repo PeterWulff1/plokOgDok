@@ -46,6 +46,7 @@ docs/                     # plandokument.md, decisions.md
 - Phase 2 check: `uv run python -m scraper.parse_and_seed --dry-run`
 - Phase 2 seed: `uv run python -m scraper.parse_and_seed`
 - Sinclair fit: `uv run python -m scripts.fit_sinclair`
+- Check every page of the site: `uv run python -m scripts.check_site` (run after UI or view changes)
 - Run website: `uv run uvicorn app.main:app --reload` (then http://127.0.0.1:8000)
 - Admin: http://127.0.0.1:8000/admin (password `ADMIN_PASSWORD` in `.env`)
 
@@ -79,6 +80,7 @@ Rules:
 - Sinclair uses the coefficient set valid for the competition's year. Never hardcode coefficients in code. They live in the table.
 - Store `birth_year` only, never the full date of birth (GDPR, junior lifters).
 - Every load is idempotent: upsert on `vlstat_id`, so re-running the seed never duplicates data.
+- **Suspect entries** (`v_entry_result.suspect_reason`): vlstat's total doesn't match its attempts, or a lift is physically impossible. Their attempts stay visible, but best lifts, total and Sinclair are NULL, so they never count as records. Show them with the "tvivlsomme data" note.
 
 ## Scraper rules (vlstat.dk)
 
@@ -135,6 +137,10 @@ Desktop and mobile get equal attention. UI text in Danish.
 
 - Colors: background `#FFF9F2` (Light Cream), panels/sidebar/tables `#F3E6D5` (Warm Beige), headings/primary buttons `#800020` (Deep Burgundy), accents/metrics/PR markers/chart highlights `#D45060` (Coral Rose). Define them once as CSS custom properties in `app/static/`, not inline.
 - Attempts display as the plain number (e.g. `95`). Show made vs. missed **by color only**: dark green for made, `#D45060` for missed. No strikethrough, no minus signs, no X.
+- **PRs:** a thick coral underline under the number that set the record (class `is-pr`: the total, or the made attempt that was the new best snatch/C&J). No stamps, badges, superscripts or icons; nothing that adds width to table cells. A lifter's first competition is marked "debut" in the sub-line instead, since everything there is trivially a PR.
+- **Sinclair across genders:** never rank women and men together. Show the best woman and the best man separately (`v_competition_best_by_gender`).
+- **Logo font:** Anton (uppercase). Headings: Big Shoulders Display. Body: Archivo.
+- **Front page headline:** plain and functional ("Find en løfter"). No slogans or marketing copy anywhere.
 
 ## Definition of Done
 

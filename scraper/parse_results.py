@@ -177,6 +177,7 @@ def parse_results_page(html: str) -> ParseResult:
                 bodyweight=_decimal_or_none(_text(cells[6])),
                 club=_text(cells[4]) or None,
                 reported_age=age,
+                reported_total=_int_or_none(_text(cells[21])),
                 attempts=tuple(_parse_attempts(cells)),
             )
         except (ValueError, ValidationError) as exc:

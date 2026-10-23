@@ -48,9 +48,10 @@ def _one(sql: str, params: tuple = ()) -> Row | None:
 def latest_competitions(limit: int = 12) -> list[Row]:
     return _all(
         """
-        SELECT c.*, l.name AS best_sinclair_lifter
+        SELECT c.*, f.name AS best_f_name, m.name AS best_m_name
         FROM vl.mv_competition_summary c
-        LEFT JOIN vl.lifter l ON l.id = c.best_sinclair_lifter_id
+        LEFT JOIN vl.lifter f ON f.id = c.best_f_lifter_id
+        LEFT JOIN vl.lifter m ON m.id = c.best_m_lifter_id
         WHERE c.lifters > 0
         ORDER BY c.date DESC, c.competition_id DESC
         LIMIT %s
@@ -120,7 +121,7 @@ def lifter_history(lifter_id: int) -> list[Row]:
                p.is_pr_snatch, p.is_pr_cj, p.is_pr_total, p.is_debut
         FROM vl.v_entry_result r
         JOIN vl.competition c ON c.id = r.competition_id
-        JOIN vl.v_entry_pr p  ON p.entry_id = r.entry_id
+        JOIN vl.mv_entry_pr p ON p.entry_id = r.entry_id
         WHERE r.lifter_id = %s
         ORDER BY r.date DESC, r.entry_id DESC
         """,
@@ -178,7 +179,7 @@ def competition_results(competition_id: int) -> list[Row]:
                p.is_pr_snatch, p.is_pr_cj, p.is_pr_total, p.is_debut
         FROM vl.v_entry_result r
         JOIN vl.lifter l     ON l.id = r.lifter_id
-        JOIN vl.v_entry_pr p ON p.entry_id = r.entry_id
+        JOIN vl.mv_entry_pr p ON p.entry_id = r.entry_id
         WHERE r.competition_id = %s
         ORDER BY r.gender, r.weight_class NULLS FIRST, r.total DESC NULLS LAST, r.sinclair DESC
         """,
@@ -206,14 +207,21 @@ def competition_clubs(competition_id: int) -> list[Row]:
     )
 
 
-def competition_top_sinclair(competition_id: int, limit: int = 5) -> list[Row]:
-    return _all(
+def competition_top_sinclair(competition_id: int, per_gender: int = 3) -> dict[str, list[Row]]:
+    """Best Sinclair per gender: {"F": [...], "M": [...]}. Sinclair isn't comparable
+    across genders (docs/decisions.md), so women and men are listed separately."""
+    out: dict[str, list[Row]] = {"F": [], "M": []}
+    for r in _all(
         """
-        SELECT r.sinclair, r.total, r.bodyweight, r.club, l.name, r.lifter_id
-        FROM vl.v_entry_result r JOIN vl.lifter l ON l.id = r.lifter_id
-        WHERE r.competition_id = %s AND r.sinclair IS NOT NULL
-        ORDER BY r.sinclair DESC
-        LIMIT %s
+        SELECT * FROM (
+            SELECT r.gender, r.sinclair, r.total, r.bodyweight, r.club, l.name, r.lifter_id,
+                   row_number() OVER (PARTITION BY r.gender ORDER BY r.sinclair DESC) AS n
+            FROM vl.v_entry_result r JOIN vl.lifter l ON l.id = r.lifter_id
+            WHERE r.competition_id = %s AND r.sinclair IS NOT NULL AND r.gender IS NOT NULL
+        ) t WHERE n <= %s
+        ORDER BY gender, n
         """,
-        (competition_id, limit),
-    )
+        (competition_id, per_gender),
+    ):
+        out[r["gender"]].append(r)
+    return out
