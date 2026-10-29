@@ -82,3 +82,29 @@ def test_birth_year_derived(conn, raw_dir):
         0
     ]
     assert birth_year == 1986
+
+
+def test_weigh_in_margin_reads_class_ceilings(conn, raw_dir):
+    seed(conn, load_dataset(raw_dir))
+    lifter_id, competition_id = conn.execute(
+        "SELECT lifter_id, competition_id FROM vl.entry LIMIT 1"
+    ).fetchone()
+    conn.execute("DELETE FROM vl.entry WHERE lifter_id = %s", (lifter_id,))
+    rows = [  # (weight_class, bodyweight): only the first two have a usable ceiling
+        ("45-49år -81kg", 80.6),
+        ("71 - 89kg", 88.6),
+        ("+109kg", 120.0),
+        ("udenfor konkurrence", 70.0),
+        ("-73kg", 75.0),  # above the ceiling: bad data, skipped
+    ]
+    for wc, bw in rows:
+        conn.execute(
+            "INSERT INTO vl.entry (lifter_id, competition_id, weight_class, bodyweight, club)"
+            " VALUES (%s, %s, %s, %s, 'AK Test')",
+            (lifter_id, competition_id, wc, bw),
+        )
+    margin, n = conn.execute(
+        "SELECT weigh_in_margin, weigh_ins FROM vl.v_lifter_weigh_in WHERE lifter_id = %s",
+        (lifter_id,),
+    ).fetchone()
+    assert (float(margin), n) == (0.4, 2)

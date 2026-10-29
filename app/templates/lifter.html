@@ -69,10 +69,14 @@
     </div>
     <div class="oddities">
       <div class="oddity">
-        <div class="big">{{ lifter.nerves_index|signed_pct|replace(" point", "") }}</div>
+        <div class="big">{% if lifter.weigh_in_margin is not none %}{% if lifter.weigh_in_margin > 0 %}−{% endif %}{{ lifter.weigh_in_margin|num(1) }}{% else %}–{% endif %}</div>
         <div>
-          <h3>Nerver af stål</h3>
-          <p>Rammer {{ lifter.hit_rate_3rd|pct }} af sine 3. forsøg mod {{ lifter.hit_rate_1st|pct }} af åbningsforsøgene.</p>
+          <h3>Indvejnings-snigskytte</h3>
+          {% if lifter.weigh_in_margin is not none %}
+            <p>Vejer i snit ind {% if lifter.weigh_in_margin < 1 %}blot {% endif %}{{ lifter.weigh_in_margin|num(1) }} kg under loftet i sin vægtklasse ({{ lifter.weigh_ins }} {{ "indvejning" if lifter.weigh_ins == 1 else "indvejninger" }}).</p>
+          {% else %}
+            <p>Ingen indvejninger i en vægtklasse med et loft.</p>
+          {% endif %}
         </div>
       </div>
       {% for disc in ["snatch", "cj"] %}{% set j = jumps[disc][0] if jumps[disc] else none %}
@@ -87,10 +91,18 @@
       {% endif %}
       {% endfor %}
       <div class="oddity">
-        <div class="big">{{ lifter.comebacks }}</div>
+        <div class="big">{% if lifter.hidden_potential is not none %}{% if lifter.hidden_potential > 0 %}+{% endif %}{{ lifter.hidden_potential }}{% else %}–{% endif %}</div>
         <div>
-          <h3>Comebacks</h3>
-          <p>Gange det er lykkedes at ramme 3. forsøg efter at have misset både 1. og 2. ({{ lifter.comeback_chances }} chancer).</p>
+          <h3>Skjult potentiale</h3>
+          {% if lifter.hidden_potential is none %}
+            <p>Kræver en gyldig total.</p>
+          {% elif lifter.hidden_potential > 0 %}
+            <p>Har løftet {{ lifter.super_total }} kg på tværs af stævner ({{ lifter.pr_snatch }} kg træk + {{ lifter.pr_cj }} kg stød), men bedste samlede tokamp er {{ lifter.pr_total }} kg.</p>
+          {% elif lifter.competitions > 1 %}
+            <p>Har ramt sit absolutte topniveau i både træk og stød til samme stævne.</p>
+          {% else %}
+            <p>Bedste træk og stød er fra samme stævne. Der er kun ét stævne indtil videre.</p>
+          {% endif %}
         </div>
       </div>
       <div class="oddity">

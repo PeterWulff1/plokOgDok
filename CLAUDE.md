@@ -126,7 +126,7 @@ The site's name is **Pløk og Døk**. Never brand it with "vlstat" or anything t
 
 **Version 1** (decided 2026-10-19; runs locally only, hosting decided later):
 - **Front page:** latest competitions plus a prominent lifter search.
-- **Lifter profile** `/loefter/{lifter_id}` (our own ID; manual lifters have no vlstat_id): PRs (snatch, C&J, total, Sinclair), progression chart, hit rate per attempt number and discipline, snatch/C&J ratio over time, full competition history with attempt colors, and fun stats: favourite weight jump, "nerves of steel" (3rd- vs 1st-attempt hit rate), comeback lifts (made 3rd after missing 1st and 2nd), longest streak of made lifts, most stable lifter.
+- **Lifter profile** `/loefter/{lifter_id}` (our own ID; manual lifters have no vlstat_id): PRs (snatch, C&J, total, Sinclair), progression chart, hit rate per attempt number and discipline, snatch/C&J ratio over time, full competition history with attempt colors, and fun stats: favourite weight jump, weigh-in precision (avg kg below the class ceiling), hidden potential (PR snatch + PR C&J minus best total), longest streak of made lifts, most stable lifter.
 - **Competition page** `/staevne/{competition_id}`: results by weight class, competition hit rate, best Sinclair of the day, PRs set, club summary.
 - **Admin page:** password login (`ADMIN_PASSWORD`), add competitions via form or CSV. Uses the write role only after login.
 - Not in v1: leaderboards.

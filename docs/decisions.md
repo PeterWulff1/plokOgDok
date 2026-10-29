@@ -2,6 +2,19 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-29 — Lifter page: "hidden potential" and "weigh-in sniper" replace comebacks and nerves (migration 013)
+
+**Decision:** The lifter page shows two new stats instead of "Comebacks" and "Nerver af stål":
+- **Skjult potentiale** = PR snatch + PR C&J (from any competitions) minus the best real total (`v_lifter_potential.hidden_potential`). 0 means both PRs came from the same competition.
+- **Indvejnings-snigskytte** = average kg below the weight-class ceiling at weigh-in (`v_lifter_weigh_in.weigh_in_margin`). The ceiling is the number in a trailing `-NNkg` of `entry.weight_class` (`-81kg`, `45-49år -81kg`, `71 - 81kg`). Open-ended classes (`+109kg`), `udenfor konkurrence`, NULL classes (gender-only meets) and bodyweights above the ceiling are skipped.
+
+**Reason:** The user preferred these. Comebacks were 0 for most lifters, and the nerves index repeated what the hit-rate board already shows.
+
+**Consequences:**
+- `v_lifter_comeback` and the `comebacks`, `comeback_chances` and `nerves_index` columns stay in `mv_lifter_summary` (nothing is dropped). They're just no longer displayed.
+- The new views read `vl.entry` and `mv_lifter_summary` only, so they need no refresh and stay fast for one lifter (~0.1 s).
+- Lifters who only ever lifted in open-ended or unclassed groups have no weigh-in margin; the page shows "–".
+
 ## 2026-10-20 — Suspect source data is kept but never becomes a record (migrations 011–012)
 
 **Decision:** `entry.reported_total` stores the total vlstat displays (raw source data, like `reported_age`). `v_entry_result.suspect_reason` flags:

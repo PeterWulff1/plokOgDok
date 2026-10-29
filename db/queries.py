@@ -97,7 +97,15 @@ def site_totals() -> Row:
 
 
 def lifter_summary(lifter_id: int) -> Row | None:
-    return _one("SELECT * FROM vl.mv_lifter_summary WHERE lifter_id = %s", (lifter_id,))
+    return _one(
+        """
+        SELECT s.*, p.super_total, p.hidden_potential, p.weigh_in_margin, p.weigh_ins
+        FROM vl.mv_lifter_summary s
+        LEFT JOIN vl.v_lifter_potential p ON p.lifter_id = s.lifter_id
+        WHERE s.lifter_id = %s
+        """,
+        (lifter_id,),
+    )
 
 
 def _attempt_slots(entry_ids: list[int]) -> dict[int, dict[str, list[Row | None]]]:
