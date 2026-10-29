@@ -61,7 +61,7 @@ def main() -> None:
             lifters = lifters[: args.lifters]
         urls = ["/", "/sog?q=an", "/sog?q=zzzzzz", "/admin/login"]
         urls += [f"/staevne/{c['competition_id']}" for c in comps]
-        urls += [f"/loefter/{l['lifter_id']}" for l in lifters]
+        urls += [f"/loefter/{row['lifter_id']}" for row in lifters]
         for i, url in enumerate(urls, 1):
             t = check(client, url, problems)
             times[url.split("/")[1] or "front"] += t

@@ -24,6 +24,7 @@ def _conn():
         _pool = ConnectionPool(
             os.environ["DATABASE_URL_WRITE"], min_size=0, max_size=2,
             kwargs={"row_factory": dict_row, "autocommit": True},
+            check=ConnectionPool.check_connection, max_idle=300,  # see db/queries.py
         )  # fmt: skip
     return _pool.connection()
 

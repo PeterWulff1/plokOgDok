@@ -21,7 +21,12 @@ def open_pool(url: str | None = None) -> ConnectionPool:
     global _pool
     if _pool is None:
         url = url or os.environ["DATABASE_URL_READ"]
-        _pool = ConnectionPool(url, min_size=1, max_size=4, kwargs={"row_factory": dict_row})
+        _pool = ConnectionPool(
+            url, min_size=1, max_size=4, kwargs={"row_factory": dict_row},
+            # Supabase's pooler drops idle connections; test each one before use and
+            # recycle idle ones, so a site left running for days doesn't return 500s.
+            check=ConnectionPool.check_connection, max_idle=300,
+        )  # fmt: skip
     return _pool
 
 
