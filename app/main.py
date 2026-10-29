@@ -3,7 +3,9 @@
 Run: uv run uvicorn app.main:app --reload
 """
 
+import json
 import os
+import random
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -21,6 +23,8 @@ from db import queries
 
 load_dotenv()
 HERE = Path(__file__).parent
+# Club logos for the front-page wheel: static files, not database data.
+CLUB_LOGOS = json.loads((HERE / "static" / "logos" / "logos.json").read_text(encoding="utf-8"))
 
 
 @asynccontextmanager
@@ -62,6 +66,7 @@ def front_page(request: Request):
         "index.html",
         competitions=queries.latest_competitions(12),
         totals=queries.site_totals(),
+        logos=random.sample(CLUB_LOGOS, len(CLUB_LOGOS)),
     )
 
 

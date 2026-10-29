@@ -158,6 +158,49 @@ h3 { font-size: 22px; }
 }
 .tally b { color: var(--ink); font-weight: 900; font-size: 28px; margin-right: 4px; }
 
+/* Club logo wheel: the list is rendered twice, so sliding the track by half loops seamlessly. */
+/* The wheel sits centred in the space right of the search, exactly as tall as the hero text. */
+.hero {
+  display: grid; grid-template-columns: minmax(0, max-content) minmax(180px, 1fr);
+  gap: 40px; align-items: stretch;
+}
+.hero-main { min-width: 0; }
+.logo-wheel {
+  position: relative; overflow: hidden; width: 180px; justify-self: center;
+  margin: -40px 0;  /* reach a little past the text, evenly, so the fades sit outside it */
+  mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+}
+.logo-track {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; flex-direction: column; animation: logo-down 110s linear infinite;
+}
+.logo-wheel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.logo-wheel li {
+  display: flex; align-items: center; justify-content: center;
+  height: 120px; padding: 14px 22px;
+}
+.logo-wheel img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
+@keyframes logo-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+@keyframes logo-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .logo-wheel {
+    width: auto; justify-self: stretch; margin: 0;
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+  .logo-track, .logo-wheel ul { flex-direction: row; width: max-content; }
+  .logo-track { position: static; animation-name: logo-left; animation-duration: 90s; }
+  .logo-wheel li { height: 76px; width: 120px; padding: 10px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-track { animation: none; }
+  .logo-wheel { overflow: auto; }
+  .logo-wheel ul[aria-hidden] { display: none; }
+}
+
 /* --- Tables --------------------------------------------------------------------- */
 
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

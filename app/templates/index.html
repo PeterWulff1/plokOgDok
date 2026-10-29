@@ -2,6 +2,7 @@
 
 {% block content %}
 <section class="hero" id="sog">
+  <div class="hero-main">
   <p class="kicker">Dansk vægtløftning · siden {{ totals.since.year }}</p>
   <h1>Find en løfter</h1>
 
@@ -18,6 +19,22 @@
     <span><b>{{ totals.competitions|num }}</b> stævner</span>
     <span><b>{{ totals.attempts|num }}</b> forsøg</span>
   </div>
+  </div>
+
+  {% if logos %}
+  <div class="logo-wheel" role="region" aria-label="Klubber">
+    <div class="logo-track">
+      {% for copy in [1, 2] %}
+      <ul{% if copy == 2 %} aria-hidden="true"{% endif %}>
+        {% for logo in logos %}
+        <li><img src="/static/logos/{{ logo.file }}" width="{{ logo.w }}" height="{{ logo.h }}"
+                 alt="{{ logo.club if copy == 1 else '' }}" title="{{ logo.club }}" decoding="async"></li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </section>
 
 <section class="section" id="staevner">

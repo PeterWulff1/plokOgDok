@@ -70,6 +70,18 @@ def test_front_page(client):
     assert "Pløk" in r.text and "vlstat.dk" in r.text
 
 
+def test_club_logos_exist_and_wheel_renders(client):
+    logos_dir = app_main.HERE / "static" / "logos"
+    assert app_main.CLUB_LOGOS
+    for logo in app_main.CLUB_LOGOS:
+        assert (logos_dir / logo["file"]).is_file(), logo["file"]
+    r = client.get("/")
+    first = app_main.CLUB_LOGOS[0]
+    # Each logo appears twice (the loop copy), but only the first copy has alt text.
+    assert r.text.count(f"/static/logos/{first['file']}") == 2
+    assert r.text.count(f'alt="{first["club"]}"') == 1
+
+
 def test_search_partial(client):
     r = client.get("/sog", params={"q": "test"})
     assert r.status_code == 200
