@@ -238,3 +238,116 @@ def competition_top_sinclair(competition_id: int, per_gender: int = 3) -> dict[s
     ):
         out[r["gender"]].append(r)
     return out
+
+
+# --- Club page --------------------------------------------------------------------
+
+
+def all_clubs() -> list[Row]:
+    """Every club (~75 rows), busiest first. Search and slug lookup filter these in
+    core.clubs, since matching ignores Danish spelling (aa/å), which SQL ILIKE can't."""
+    return _all("SELECT * FROM vl.v_club ORDER BY starts DESC, club")
+
+
+def club_summary(club: str) -> Row | None:
+    return _one(
+        """
+        SELECT c.*, h.attempts, h.made, h.hit_rate, h.national_hit_rate
+        FROM vl.v_club c
+        LEFT JOIN vl.v_club_hit_rate h ON h.club = c.club
+        WHERE c.club = %s
+        """,
+        (club,),
+    )
+
+
+def club_records(club: str) -> dict[str, dict[str, Row]]:
+    """{"F": {"snatch": row, "cj": ..., "total": ..., "sinclair": ...}, "M": {...}}."""
+    out: dict[str, dict[str, Row]] = {"F": {}, "M": {}}
+    for r in _all(
+        """
+        SELECT r.*, l.name, c.name AS competition
+        FROM vl.v_club_record r
+        JOIN vl.lifter l      ON l.id = r.lifter_id
+        JOIN vl.competition c ON c.id = r.competition_id
+        WHERE r.club = %s AND r.gender IS NOT NULL
+        """,
+        (club,),
+    ):
+        out[r["gender"]][r["kind"]] = r
+    return out
+
+
+def club_top_sinclair(club: str, per_gender: int = 5) -> dict[str, list[Row]]:
+    """Each lifter's best Sinclair for the club, top N per gender (never ranked together)."""
+    out: dict[str, list[Row]] = {"F": [], "M": []}
+    for r in _all(
+        """
+        SELECT t.*, l.name, c.name AS competition
+        FROM vl.v_club_top_sinclair t
+        JOIN vl.lifter l      ON l.id = t.lifter_id
+        JOIN vl.competition c ON c.id = t.competition_id
+        WHERE t.club = %s AND t.rank <= %s AND t.gender IS NOT NULL
+        ORDER BY t.gender, t.rank
+        """,
+        (club, per_gender),
+    ):
+        out[r["gender"]].append(r)
+    return out
+
+
+def club_lifters(club: str) -> list[Row]:
+    """Everyone who lifted for the club: active first, then by best Sinclair."""
+    return _all(
+        """
+        SELECT cl.*, l.name, l.gender, l.birth_year
+        FROM vl.v_club_lifter cl
+        JOIN vl.lifter l ON l.id = cl.lifter_id
+        WHERE cl.club = %s
+        ORDER BY cl.is_active DESC, cl.best_sinclair DESC NULLS LAST, l.name
+        """,
+        (club,),
+    )
+
+
+def club_loyal(club: str, limit: int = 4) -> dict[str, list[Row]]:
+    """{"starts": most competitions for the club, "years": longest span in the club}."""
+    return {
+        "starts": _all(
+            """
+            SELECT cl.*, l.name
+            FROM vl.v_club_lifter cl JOIN vl.lifter l ON l.id = cl.lifter_id
+            WHERE cl.club = %s
+            ORDER BY cl.starts DESC, cl.last_date DESC
+            LIMIT %s
+            """,
+            (club, limit),
+        ),
+        "years": _all(
+            """
+            SELECT cl.*, l.name
+            FROM vl.v_club_lifter cl JOIN vl.lifter l ON l.id = cl.lifter_id
+            WHERE cl.club = %s
+            ORDER BY cl.years DESC, cl.starts DESC
+            LIMIT 1
+            """,
+            (club,),
+        ),
+    }
+
+
+def club_age_profile(club: str) -> list[Row]:
+    """[{"year", "year_lifters", "groups": [rows by group_order]}], oldest year first."""
+    years: list[Row] = []
+    for r in _all(
+        """
+        SELECT * FROM vl.v_club_age_profile
+        WHERE club = %s
+        ORDER BY year, group_order
+        """,
+        (club,),
+    ):
+        if not years or years[-1]["year"] != r["year"]:
+            years.append({"year": r["year"], "year_lifters": r["year_lifters"], "groups": []})
+        years[-1]["groups"].append(r)
+    return years

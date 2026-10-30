@@ -13,6 +13,7 @@ from collections import Counter
 from fastapi.testclient import TestClient
 
 from app.main import app
+from core.clubs import club_slug
 from db import queries
 
 # Text that should never reach a visitor.
@@ -59,7 +60,8 @@ def main() -> None:
         lifters = queries._all("SELECT lifter_id FROM vl.mv_lifter_summary ORDER BY 1")
         if args.lifters:
             lifters = lifters[: args.lifters]
-        urls = ["/", "/sog?q=an", "/sog?q=zzzzzz", "/admin/login"]
+        urls = ["/", "/sog?q=an", "/sog?q=aarhus", "/sog?q=zzzzzz", "/admin/login"]
+        urls += [f"/klub/{club_slug(c['club'])}" for c in queries.all_clubs()]
         urls += [f"/staevne/{c['competition_id']}" for c in comps]
         urls += [f"/loefter/{row['lifter_id']}" for row in lifters]
         for i, url in enumerate(urls, 1):

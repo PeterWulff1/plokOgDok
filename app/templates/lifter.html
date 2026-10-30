@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "partials/macros.html" import attempts, total, debut, suspect %}
+{% from "partials/macros.html" import attempts, total, debut, suspect, club_link %}
 
 {% block title %}{{ lifter.name }} · Pløk og Døk{% endblock %}
 {% block description %}{{ lifter.name }}: personlige rekorder, hit-rate og alle stævner siden {{ lifter.first_date.year }}.{% endblock %}
@@ -12,7 +12,7 @@
   <p class="kicker">{{ lifter.gender|gender }}{% if lifter.weight_class %} · {{ lifter.weight_class }}{% endif %}</p>
   <h1>{{ lifter.name }}</h1>
   <div class="facts">
-    <span>Klub <b>{{ lifter.club or "ukendt" }}</b></span>
+    <span>Klub <b>{{ club_link(lifter.club, "ukendt") }}</b></span>
     {% if lifter.birth_year %}<span>Født <b>{{ lifter.birth_year }}</b></span>{% endif %}
     <span><b>{{ lifter.competitions }}</b> stævner</span>
     <span>Aktiv <b>{{ lifter.first_date|dk_date }} – {{ lifter.last_date|dk_date }}</b></span>
@@ -173,5 +173,5 @@
 
 {% block scripts %}
 <script id="chart-data" type="application/json">{{ chart|tojson }}</script>
-<script src="{{ url_for('static', path='js/progression.js') }}" defer></script>
+<script src="{{ static_url('js/progression.js') }}" defer></script>
 {% endblock %}

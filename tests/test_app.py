@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -42,6 +43,90 @@ def test_progression_series_is_oldest_first_and_skips_debut_prs():
     assert s["pr_cj"] == [False, False]
 
 
+CLUB = {
+    "club": "Århus Atlet Klub",
+    "starts": 790,
+    "lifters": 99,
+    "active_lifters": 42,
+    "women": 40,
+    "men": 59,
+    "competitions": 120,
+    "first_date": date(2019, 1, 5),
+    "last_date": date(2026, 10, 12),
+    "attempts": 4000,
+    "made": 2900,
+    "hit_rate": Decimal("0.725"),
+    "national_hit_rate": Decimal("0.7168"),
+}
+_REC = {
+    "lifter_id": 7,
+    "name": "Test Løfter",
+    "date": date(2024, 10, 5),
+    "weight_class": "-81kg",
+    "competition_id": 3,
+    "competition": "Aalborg cup 2024",
+    "best_snatch": 130,
+    "best_cj": 158,
+}
+CLUB_RECORDS = {
+    "F": {},
+    "M": {
+        "snatch": {**_REC, "value": Decimal(131)},
+        "cj": {**_REC, "value": Decimal(158)},
+        "total": {**_REC, "value": Decimal(288)},
+        "sinclair": {**_REC, "value": Decimal("373.03")},
+    },
+}
+TOP = {
+    "rank": 1,
+    "lifter_id": 7,
+    "name": "Test Løfter",
+    "competition": "Aalborg cup 2024",
+    "total": 288,
+    "bodyweight": Decimal("78.10"),
+    "sinclair": Decimal("373.03"),
+}
+CLUB_LIFTERS = [
+    {
+        "lifter_id": 7,
+        "name": "Test Løfter",
+        "gender": "M",
+        "birth_year": 2000,
+        "weight_class": "-81kg",
+        "starts": 12,
+        "first_date": date(2019, 6, 1),
+        "last_date": date(2026, 6, 1),
+        "years": Decimal("7.0"),
+        "is_active": True,
+        "age_group": "senior",
+        "best_snatch": 131,
+        "best_cj": 158,
+        "best_total": 288,
+        "best_sinclair": Decimal("373.03"),
+    },
+    {
+        "lifter_id": 8,
+        "name": "Gammel Løfter",
+        "gender": "F",
+        "birth_year": None,
+        "weight_class": None,
+        "starts": 1,
+        "first_date": date(2019, 2, 1),
+        "last_date": date(2019, 2, 1),
+        "years": Decimal("0.0"),
+        "is_active": False,
+        "age_group": "ukendt",
+        "best_snatch": None,
+        "best_cj": None,
+        "best_total": None,
+        "best_sinclair": None,
+    },
+]
+AGES = [{"year": 2019, "year_lifters": 2, "groups": [
+    {"age_group": "senior", "lifters": 1, "share_of_max": Decimal("0.5")},
+    {"age_group": "ukendt", "lifters": 1, "share_of_max": Decimal("0.5")}]}]  # fmt: skip
+
+
 @pytest.fixture
 def client(monkeypatch):
     """App with the database replaced by canned rows."""
@@ -59,6 +144,15 @@ def client(monkeypatch):
                                  "pr_total": 200, "last_date": date(2026, 1, 1)}],
     )  # fmt: skip
     monkeypatch.setattr(q, "lifter_summary", lambda lifter_id: None)
+    monkeypatch.setattr(q, "all_clubs", lambda: [CLUB])
+    monkeypatch.setattr(q, "club_summary", lambda club: CLUB if club == CLUB["club"] else None)
+    monkeypatch.setattr(q, "club_records", lambda club: CLUB_RECORDS)
+    monkeypatch.setattr(q, "club_top_sinclair", lambda club, per_gender=5: {"F": [], "M": [TOP]})
+    monkeypatch.setattr(q, "club_lifters", lambda club: CLUB_LIFTERS)
+    monkeypatch.setattr(
+        q, "club_loyal", lambda club, limit=4: {"starts": CLUB_LIFTERS, "years": CLUB_LIFTERS}
+    )
+    monkeypatch.setattr(q, "club_age_profile", lambda club: AGES)
     monkeypatch.setattr(q, "competition_summary", lambda competition_id: None)
     with TestClient(app_main.app) as c:
         yield c
@@ -91,3 +185,39 @@ def test_search_partial(client):
 def test_unknown_lifter_and_competition_are_404(client):
     assert client.get("/loefter/1").status_code == 404
     assert client.get("/staevne/1").status_code == 404
+
+
+def test_search_partial_lists_clubs_by_danish_spelling(client):
+    r = client.get("/sog", params={"q": "aarhus"})
+    assert r.status_code == 200
+    assert 'href="/klub/aarhus-atlet-klub"' in r.text
+    assert "Klubber" in r.text
+
+
+def test_club_page(client):
+    r = client.get("/klub/aarhus-atlet-klub")
+    assert r.status_code == 200
+    text = r.text
+    assert "Århus Atlet Klub" in text
+    assert "aarhus-ak.webp" in text  # logo mapped through vlstat_club in logos.json
+    assert "288<small>kg</small>" in text  # record total, shown like the other records
+    assert "373,0" in text
+    # One roster table; filters and sorting work on these row attributes in the browser.
+    assert 'data-status="active" data-gender="M" data-age="senior"' in text
+    assert 'data-status="former" data-gender="F" data-age="ukendt"' in text
+    assert 'value="active" checked' in text  # active lifters shown first
+    assert 'data-v="373.03"' in text and "table-tools.js" in text
+    assert "Ukendt alder" in text
+    assert "None" not in text
+
+
+def test_unknown_or_placeholder_club_is_404(client):
+    assert client.get("/klub/ak-findes-ikke").status_code == 404
+    assert client.get("/klub/andre").status_code == 404
+
+
+def test_static_urls_are_versioned(client):
+    r = client.get("/")
+    m = re.search(r'href="(/static/css/site\.css\?v=\d+)"', r.text)
+    assert m, "stylesheet link should carry a version"
+    assert client.get(m.group(1)).status_code == 200

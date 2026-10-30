@@ -39,6 +39,12 @@
   {%- endif -%}
 {%- endmacro %}
 
+{# A club name, linked to its club page unless it's a placeholder like "Andre". #}
+{% macro club_link(name, fallback="") -%}
+  {%- set slug = name|club_slug -%}
+  {%- if slug %}<a href="/klub/{{ slug }}">{{ name }}</a>{% else %}{{ name or fallback }}{% endif -%}
+{%- endmacro %}
+
 {# " · debut" for a lifter's first competition (where every result is trivially a PR). #}
 {% macro debut(r) -%}
   {%- if r.is_debut %} · <span class="debut">debut</span>{% endif -%}

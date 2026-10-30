@@ -3,13 +3,15 @@
   "file": "aarhus-ak.webp",
   "club": "Aarhus AK",
   "w": 240,
-  "h": 105
+  "h": 105,
+  "vlstat_club": "Århus Atlet Klub"
  },
  {
   "file": "aarhus-crossfit-vaegtloeftning.webp",
   "club": "Aarhus Crossfit Vægtløftning",
   "w": 240,
-  "h": 63
+  "h": 63,
+  "vlstat_club": "Århus Crossfit Vægtløftning"
  },
  {
   "file": "ak-gotha.webp",
@@ -45,13 +47,15 @@
   "file": "atletklubben-dan.webp",
   "club": "Atletklubben Dan",
   "w": 232,
-  "h": 240
+  "h": 240,
+  "vlstat_club": "AK Dan"
  },
  {
   "file": "bagsvaerd-vaegtloeftnings-klub.webp",
   "club": "Bagsværd Vægtløftnings Klub",
   "w": 237,
-  "h": 240
+  "h": 240,
+  "vlstat_club": "Bagsværd VK"
  },
  {
   "file": "bk-limfjord.webp",
@@ -69,13 +73,15 @@
   "file": "foreningen-sportshoejskolen.webp",
   "club": "Foreningen Sportshøjskolen",
   "w": 240,
-  "h": 66
+  "h": 66,
+  "vlstat_club": "Sportshøjskolen"
  },
  {
   "file": "gladsaxe-crossfit-barbell-club.webp",
   "club": "Gladsaxe Crossfit Barbell Club",
   "w": 240,
-  "h": 180
+  "h": 180,
+  "vlstat_club": "Gladsaxe Crossfit"
  },
  {
   "file": "gundsoe-vk.webp",
@@ -93,13 +99,15 @@
   "file": "hg-vaegtloeftning-og-styrkeloeft.webp",
   "club": "HG Vægtløftning og Styrkeløft",
   "w": 240,
-  "h": 240
+  "h": 240,
+  "vlstat_club": "HG Vægtløftning/Styrkeløft"
  },
  {
   "file": "holstebro-styrkesport-performancelab.webp",
   "club": "Holstebro Styrkesport-PerformanceLab",
   "w": 240,
-  "h": 102
+  "h": 102,
+  "vlstat_club": "Holstebro styrkesport"
  },
  {
   "file": "horsens-funktionel-fitness-toolbox.webp",
@@ -159,7 +167,8 @@
   "file": "vk49.webp",
   "club": "VK49",
   "w": 236,
-  "h": 240
+  "h": 240,
+  "vlstat_club": "VK 49"
  },
  {
   "file": "vl365.webp",
@@ -171,7 +180,8 @@
   "file": "vaegtloeftningsklubben-valhal.webp",
   "club": "Vægtløftningsklubben Valhal",
   "w": 240,
-  "h": 214
+  "h": 214,
+  "vlstat_club": "VK Valhal"
  },
  {
   "file": "aalholm-if.webp",

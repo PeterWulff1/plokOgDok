@@ -2,6 +2,40 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-30 — Club roster: filters and sorting in the browser (migration 015)
+
+**Decision:** The club roster is one table (active and former lifters together) with filters for status (Aktive / Tidligere / Alle, default Aktive), gender and age group, and sorting by clicking a column header.
+- The page already loads the whole roster in one query (at most ~155 rows), so filtering and sorting run in the browser (`app/static/js/table-tools.js`) with no extra requests. Rows carry `data-status`, `data-gender` and `data-age`; cells carry their raw sort value in `data-v`.
+- `table-tools.js` is generic (any `table.sortable[id]` with an optional `form[data-table]`), so other tables can reuse it.
+- Without JavaScript the filter form stays hidden and every lifter is listed.
+- A lifter's age group is the one in the year of their latest start for the club, so a former lifter who stopped as a junior stays a junior.
+- The age-group rule now lives in one SQL function, `vl.age_group(age)`, used by both `v_club_age_profile` and `v_club_lifter.age_group`. The age profile returns exactly the same rows as before.
+- No bodyweight column or sort (the user's choice).
+- Look (chosen from three rendered proposals): the filters are plain uppercase words like a newspaper's section nav, the chosen one underlined in burgundy (coral underlines mean PR), groups split by vertical rules. The count ("6 af 32 løftere") sits in the section kicker. Only the sorted column header shows an arrow and turns burgundy.
+
+**Reason:** The user wanted to filter by gender and age and sort by snatch, C&J and total without slowing the page.
+
+**Consequences:**
+- On mobile, the Stævner, Sinclair and Seneste columns are hidden, so you can't sort by them there.
+
+## 2026-10-29 — Club page `/klub/{slug}` and club search (migration 014)
+
+**Decision:** Clubs get a page with headline numbers (active lifters, lifters, starts, hit rate vs. the national rate), a record board, the top 5 Sinclair results per gender, an age profile per year, the most loyal lifters and the roster (active first, former folded away). The front-page search lists matching clubs above lifters.
+- A club is the raw `entry.club` text; there is no club table. The URL slug is derived from the name in `core/clubs.py` (`Århus Atlet Klub` → `aarhus-atlet-klub`) and resolved against `v_club`.
+- Results count for the club printed on that entry, so a lifter who changed clubs appears on both pages with the results from each.
+- `Andre` and `ingen klub` are vlstat placeholders: no page, no link (`PLACEHOLDER_CLUBS` in `core/clubs.py`, mirrored in `v_club`).
+- Club records are open class per gender, not per weight class: the classes changed in 2025, and masters classes would multiply the board. Ties go to whoever lifted it first.
+- Age groups don't overlap (unlike IWF's): ungdom ≤ 17, junior 18–20, senior 21–34, master 35+, by age in the competition year from `birth_year` (`vl.age_group`, migration 015).
+- "Active" means a start within the last 365 days.
+- Search matches club names ignoring Danish spelling (`aarhus` finds `Århus`) in `core.clubs.match_clubs`, over all ~75 clubs from `v_club`; SQL `ILIKE` can't do that.
+- Club logos come from `app/static/logos/logos.json`; `vlstat_club` maps a logo to the name vlstat prints where they differ.
+
+**Reason:** The user picked these sections from a list of options and approved a mockup.
+
+**Consequences:**
+- The views are live (not materialized). A club page runs seven queries of 0.03–0.2 s each.
+- Renaming a club in vlstat's data gives a new page; there is no alias table for club names.
+
 ## 2026-10-29 — Lifter page: "hidden potential" and "weigh-in sniper" replace comebacks and nerves (migration 013)
 
 **Decision:** The lifter page shows two new stats instead of "Comebacks" and "Nerver af stål":

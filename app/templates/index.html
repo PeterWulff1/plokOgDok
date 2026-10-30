@@ -7,9 +7,9 @@
   <h1>Find en løfter</h1>
 
   <form class="search" action="/sog" role="search" onsubmit="return false">
-    <label for="q" class="visually-hidden">Søg efter løfter</label>
+    <label for="q" class="visually-hidden">Søg efter løfter eller klub</label>
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
-           placeholder="Søg efter løfter, f.eks. Peter"
+           placeholder="Søg efter løfter eller klub"
            hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results">
     <div id="search-results" class="search-results" aria-live="polite"></div>
   </form>

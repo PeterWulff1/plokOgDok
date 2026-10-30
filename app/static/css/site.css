@@ -302,6 +302,121 @@ td .sub { display: block; font-size: 13px; color: var(--ink-3); }
 .podium-head:first-of-type { margin-top: 0; }
 .podium .pts { font: 900 26px/1 var(--font-display); }
 
+/* --- Club page ------------------------------------------------------------------ */
+
+.club-head { display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: end; }
+.club-head .crest { display: block; height: 150px; width: auto; }
+.plate .note { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+.plate.brand .note { color: var(--paper-2); }
+.grid-2.even { grid-template-columns: 1fr 1fr; }
+.grid-2 > * { min-width: 0; }
+
+/* Record board: the club's wall, chalk on iron */
+.recboard {
+  --chalk: #BBA996; --chalk-rule: #4A403A;
+  display: grid; grid-template-columns: auto repeat(4, 1fr);
+  background: var(--ink); color: var(--paper); border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--burgundy);
+}
+.recboard > div { padding: 14px 16px; border-right: 1px dashed var(--chalk-rule);
+  border-bottom: 1px dashed var(--chalk-rule); }
+.recboard > div:nth-child(5n) { border-right: 0; }
+.recboard > div:nth-last-child(-n+5) { border-bottom: 0; }
+.recboard .hd { font: 700 14px var(--font-display); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--chalk); }
+.recboard .rl { font: 800 22px var(--font-display); text-transform: uppercase;
+  align-self: center; color: var(--paper-2); }
+.recboard .lbl { display: none; font: 700 12px var(--font-display); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--chalk); }
+.recboard .v { font: 900 48px/1 var(--font-display); }
+.recboard .v small { font-size: 0.42em; font-weight: 700; color: var(--chalk); margin-left: 3px; }
+.recboard .who { display: block; font-weight: 700; font-size: 15px; margin-top: 6px;
+  text-decoration: none; }
+.recboard .when { display: block; font-size: 13px; color: var(--chalk); text-decoration: none; }
+.recboard a:hover { color: #F08A96; }
+.recboard .sin .v { color: #F08A96; }  /* coral lifted for contrast on the dark board */
+
+/* Age profile: stacked columns, one per year */
+.agechart { border: 3px solid var(--ink); background: #fff; padding: 18px 16px 10px; }
+.agechart .cols, .agechart .yrs { display: grid; grid-template-columns: repeat(var(--years), 1fr); gap: 10px; }
+.agechart .cols { height: 220px; padding-top: 22px; align-items: end; border-bottom: 2px solid var(--ink); }
+.agechart .col { display: flex; flex-direction: column-reverse; height: 100%; }
+.agechart .col span { display: block; flex-shrink: 0; }
+.agechart .col span + span { border-bottom: 2px solid #fff; }
+.agechart .col .n { font: 800 15px var(--font-display); text-align: center; color: var(--ink-2);
+  border: 0; margin-bottom: 2px; }
+.agechart .yrs { margin-top: 6px; font: 700 14px var(--font-display); text-align: center;
+  color: var(--ink-2); }
+.age-ungdom { background: var(--coral); }
+.age-junior { background: var(--series-cj); }
+.age-senior { background: var(--burgundy); }
+.age-master { background: var(--ink-2); }
+.age-ukendt { background: var(--rule-soft); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 13px;
+  color: var(--ink-2); }
+.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
+
+.oddity .big small { font-size: 0.5em; margin-left: 2px; }
+.oddity h3 a { text-decoration: none; }
+
+/* Table filters (static/js/table-tools.js): plain words like a newspaper's section
+   nav. The chosen word gets a thick burgundy underline (coral underlines mean PR). */
+/* Every group has a rule on its left. The form reaches 24px left of the column and
+   clip-path hides that strip, so a group that starts a line (also after wrapping) shows
+   no rule, at any width. */
+.filters { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px 0; margin: 0 0 18px -24px;
+  clip-path: inset(-8px -8px -8px 3px); }
+.filters fieldset { border: 0; margin: 0; padding: 0 22px; border-left: 2px solid var(--ink); }
+.filters legend { float: left; width: 100%; padding: 0 0 2px; font: 700 13px var(--font-display);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.filters label { display: inline-block; cursor: pointer; margin-right: 16px; }
+.filters label:last-child { margin-right: 0; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label span { display: block; padding: 2px 0 4px; font: 800 21px/1 var(--font-display);
+  letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-3); }
+.filters label:hover span { color: var(--burgundy); }
+.filters input:checked + span { color: var(--ink); box-shadow: inset 0 -4px 0 var(--burgundy); }
+.filters input:focus-visible + span { outline: 3px solid var(--coral); outline-offset: 2px; }
+
+/* Sortable headers: the whole header is a button; only the sorted column shows an arrow */
+table.sortable th[data-sort] { padding: 0; }
+table.sortable th button {
+  all: unset; box-sizing: border-box; display: block; width: 100%; padding: 8px 10px;
+  cursor: pointer; text-align: inherit; font: inherit; letter-spacing: inherit; color: inherit;
+}
+table.sortable th button:hover { text-decoration: underline; text-underline-offset: 4px; }
+table.sortable th button:focus-visible { outline: 3px solid var(--coral); outline-offset: -3px; }
+table.sortable th[aria-sort] { color: var(--burgundy); }
+table.sortable th[aria-sort="descending"] button::after { content: " ↓"; }
+table.sortable th[aria-sort="ascending"] button::after { content: " ↑"; }
+
+/* Search: club and lifter groups */
+.search-results .group-label { padding: 6px 14px 4px; background: var(--paper-2);
+  font: 700 13px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-2); border-bottom: 1px solid var(--rule-soft); }
+
+@media (max-width: 860px) {
+  .recboard { grid-template-columns: 1fr 1fr; }
+  .recboard .hd { display: none; }
+  .recboard > div { border-right: 0 !important; border-bottom: 1px dashed var(--chalk-rule) !important; }
+  .recboard > div:last-child { border-bottom: 0 !important; }
+  .recboard .rl { grid-column: 1 / -1; padding-bottom: 4px; }
+  .recboard .lbl { display: block; }
+  .grid-2.even { grid-template-columns: 1fr; }
+  .club-head .crest { height: 96px; }
+}
+@media (max-width: 560px) {
+  .club-head { grid-template-columns: 1fr; gap: 12px; }
+  .club-head .crest { grid-row: 1; height: 72px; }
+  .recboard .v { font-size: 38px; }
+  .agechart { padding: 14px 10px 8px; }
+  .agechart .cols, .agechart .yrs { gap: 4px; }
+  .agechart .yrs { font-size: 12px; }
+  .filters label { margin-right: 14px; }
+  .filters label span { font-size: 19px; }
+  table.sortable th button { padding: 8px 6px; }
+}
+
 /* --- Admin -------------------------------------------------------------------- */
 
 .admin-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }

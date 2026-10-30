@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "partials/macros.html" import attempts, total, debut, suspect %}
+{% from "partials/macros.html" import attempts, total, debut, suspect, club_link %}
 
 {% block title %}{{ comp.name }} · Pløk og Døk{% endblock %}
 {% block description %}Resultater fra {{ comp.name }} {{ comp.date|dk_date }}: alle forsøg, dagens bedste Sinclair og nye personlige rekorder.{% endblock %}
@@ -49,7 +49,7 @@
         <tbody>
           {% for c in clubs %}
           <tr>
-            <td>{{ c.club or "Ukendt" }}</td>
+            <td>{{ club_link(c.club, "Ukendt") }}</td>
             <td class="n">{{ c.lifters }}</td>
             <td class="n">{{ c.best_sinclair|num(1) }}</td>
             <td class="n"><b>{{ c.sum_sinclair|num(1) }}</b></td>

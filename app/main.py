@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import formatting
+from core.clubs import club_slug, find_club, match_clubs
 from db import admin as admin_store
 from db import queries
 
@@ -25,6 +26,8 @@ load_dotenv()
 HERE = Path(__file__).parent
 # Club logos for the front-page wheel: static files, not database data.
 CLUB_LOGOS = json.loads((HERE / "static" / "logos" / "logos.json").read_text(encoding="utf-8"))
+# Club page logo, keyed by the club name vlstat prints (it can differ from the logo's name).
+LOGO_BY_CLUB = {logo.get("vlstat_club", logo["club"]): logo for logo in CLUB_LOGOS}
 
 
 @asynccontextmanager
@@ -49,6 +52,17 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory=HERE / "templates")
 templates.env.filters.update(formatting.FILTERS)
+templates.env.filters["club_slug"] = club_slug
+
+
+def static_url(path: str) -> str:
+    """URL for a file in app/static, versioned by its modification time so browsers
+    fetch the new file after a change instead of a cached copy."""
+    version = int((HERE / "static" / path).stat().st_mtime)
+    return f"/static/{path}?v={version}"
+
+
+templates.env.globals["static_url"] = static_url
 
 from app.admin import router as admin_router  # noqa: E402  (needs `templates` above)
 
@@ -72,8 +86,14 @@ def front_page(request: Request):
 
 @app.get("/sog", response_class=HTMLResponse)
 def search(request: Request, q: str = ""):
-    """htmx partial: lifter search results under the search box."""
-    return _render(request, "partials/search_results.html", q=q, lifters=queries.search_lifters(q))
+    """htmx partial: club and lifter search results under the search box."""
+    return _render(
+        request,
+        "partials/search_results.html",
+        q=q,
+        clubs=match_clubs(queries.all_clubs(), q),
+        lifters=queries.search_lifters(q),
+    )
 
 
 @app.get("/loefter/{lifter_id}", response_class=HTMLResponse)
@@ -105,4 +125,23 @@ def competition_page(request: Request, competition_id: int):
         groups=queries.competition_results(comp["competition_id"]),
         clubs=queries.competition_clubs(comp["competition_id"]),
         top=queries.competition_top_sinclair(comp["competition_id"]),
+    )
+
+
+@app.get("/klub/{slug}", response_class=HTMLResponse)
+def club_page(request: Request, slug: str):
+    name = find_club((c["club"] for c in queries.all_clubs()), slug)
+    club = queries.club_summary(name) if name else None
+    if club is None:
+        raise HTTPException(404, "Klubben findes ikke")
+    return _render(
+        request,
+        "club.html",
+        club=club,
+        logo=LOGO_BY_CLUB.get(name),
+        records=queries.club_records(name),
+        top=queries.club_top_sinclair(name),
+        loyal=queries.club_loyal(name),
+        ages=queries.club_age_profile(name),
+        lifters=queries.club_lifters(name),
     )

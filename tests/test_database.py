@@ -108,3 +108,35 @@ def test_weigh_in_margin_reads_class_ceilings(conn, raw_dir):
         (lifter_id,),
     ).fetchone()
     assert (float(margin), n) == (0.4, 2)
+
+
+def test_club_views_agree_with_entries(conn, raw_dir):
+    seed(conn, load_dataset(raw_dir))
+    club, starts = conn.execute(
+        "SELECT club, count(*) FROM vl.entry WHERE club IS NOT NULL GROUP BY club"
+        " ORDER BY count(*) DESC LIMIT 1"
+    ).fetchone()
+    assert (
+        conn.execute("SELECT starts FROM vl.v_club WHERE club = %s", (club,)).fetchone()[0]
+        == starts
+    )
+    # A record total is shown as snatch + C&J from the same entry.
+    for value, sn, cj in conn.execute(
+        "SELECT value, best_snatch, best_cj FROM vl.v_club_record WHERE kind = 'total'"
+    ):
+        assert value == sn + cj
+    # Age groups split each year's lifters without overlap.
+    for year_lifters, summed in conn.execute(
+        "SELECT max(year_lifters), sum(lifters) FROM vl.v_club_age_profile GROUP BY club, year"
+    ):
+        assert year_lifters == summed
+    # Placeholders get no club row.
+    conn.execute("UPDATE vl.entry SET club = 'Andre' WHERE club = %s", (club,))
+    assert conn.execute("SELECT count(*) FROM vl.v_club WHERE club = 'Andre'").fetchone()[0] == 0
+
+
+def test_age_group_boundaries(conn):
+    cases = {None: "ukendt", 13: "ungdom", 17: "ungdom", 18: "junior", 20: "junior",
+             21: "senior", 34: "senior", 35: "master", 70: "master"}  # fmt: skip
+    for age, group in cases.items():
+        assert conn.execute("SELECT vl.age_group(%s)", (age,)).fetchone()[0] == group

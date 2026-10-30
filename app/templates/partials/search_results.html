@@ -1,4 +1,15 @@
 {%- if q|length >= 2 -%}
+  {%- if clubs -%}
+    <div class="group-label">Klubber</div>
+    {%- for c in clubs -%}
+    <a href="/klub/{{ c.club|club_slug }}">
+      <span class="who">{{ c.club }}</span>
+      <span class="meta">{{ c.active_lifters }} aktive · sidst {{ c.last_date|dk_date }}</span>
+      <span class="pr">{{ c.lifters|num }}<small>løftere</small></span>
+    </a>
+    {%- endfor -%}
+    {%- if lifters %}<div class="group-label">Løftere</div>{% endif -%}
+  {%- endif -%}
   {%- for l in lifters -%}
     <a href="/loefter/{{ l.lifter_id }}">
       <span class="who">{{ l.name }}</span>
@@ -6,6 +17,6 @@
       <span class="pr">{{ l.pr_total|num }}<small>bedste total</small></span>
     </a>
   {%- else -%}
-    <div class="none">Ingen løftere matcher “{{ q }}”.</div>
+    {%- if not clubs %}<div class="none">Ingen løftere eller klubber matcher “{{ q }}”.</div>{% endif -%}
   {%- endfor -%}
 {%- endif -%}
