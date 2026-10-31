@@ -437,6 +437,17 @@ table.sortable th[aria-sort="ascending"] button::after { content: " ↑"; }
 .entry-grid input { padding: 6px !important; font-size: 14px !important; border-width: 1px !important; min-width: 3.2em; }
 .entry-grid .c-0 { min-width: 11em; }
 .entry-grid .c-4 { min-width: 8em; }
+.admin-form .entry-grid input[data-auto] { background: var(--paper-2); color: var(--ink-2); }
+.admin-form .entry-grid input.linked { border-left: 4px solid var(--made) !important; }
+.admin-form .entry-grid input.att-made { color: var(--made); font-weight: 700; }
+.admin-form .entry-grid input.att-miss { color: var(--miss); font-weight: 700; }
+.suggest { position: absolute; z-index: 50; margin: 0; padding: 0; list-style: none;
+  max-width: calc(100vw - 32px); background: #fff; border: 2px solid var(--ink); box-shadow: var(--shadow-hard); }
+.suggest li { padding: 7px 10px; cursor: pointer; border-bottom: 1px solid var(--rule-soft); }
+.suggest li:last-child { border-bottom: 0; }
+.suggest li[aria-selected="true"] { background: var(--paper-2); box-shadow: inset 4px 0 0 var(--coral); }
+.suggest .sub { display: block; font-size: 13px; color: var(--ink-3); }
+.suggest .empty { cursor: default; color: var(--ink-3); font-size: 14px; }
 
 .btn {
   display: inline-block; cursor: pointer; text-decoration: none;

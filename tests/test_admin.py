@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import admin as admin_routes
 from app import main as app_main
-from core.manual_entry import COLUMNS
+from core.manual_entry import COLUMNS, CSV_COLUMNS
 from db.admin import LifterMatch
 
 PASSWORD = "korrekt-hest-batteri"
@@ -143,3 +143,43 @@ def test_save_requires_csrf(client, saved):
     r = client.post("/admin/gem", data={"csrf": "nope", "name": "X", "date": "2026-10-18",
                                         "csv_text": "navn;køn\nOle;M\n"})  # fmt: skip
     assert r.status_code == 400 and saved == []
+
+
+def test_csv_template_has_no_hidden_columns(client):
+    _login(client)
+    header = client.get("/admin/skabelon.csv").text.splitlines()[0]
+    assert header == ";".join(CSV_COLUMNS) and "lifter_id" not in header
+
+
+def test_lifter_suggestions_require_login(client):
+    r = client.get("/admin/loeftere?q=ole")
+    assert r.status_code == 401
+
+
+def test_lifter_suggestions_in_form_values(client, monkeypatch):
+    from datetime import date
+
+    seen = []
+
+    def fake_search(q):
+        seen.append(q)
+        return [{"id": 7, "name": "Mia Test", "gender": "F", "birth_year": 2001,
+                 "club": "AK X", "weight_class": "-64kg", "last_date": date(2026, 5, 1)},
+                {"id": 8, "name": "Ny Testsen", "gender": "M", "birth_year": None,
+                 "club": None, "weight_class": None, "last_date": None}]  # fmt: skip
+
+    monkeypatch.setattr(admin_routes.store, "search_lifters", fake_search)
+    _login(client)
+    r = client.get("/admin/loeftere", params={"q": "mi" * 50})
+    assert r.status_code == 200 and len(seen[0]) == 60  # long queries are cut
+    first, second = r.json()
+    assert first == {"id": 7, "name": "Mia Test", "club": "AK X", "gender": "K", "birth_year": 2001,
+                     "weight_class": "-64kg", "last_date": "2026-05-01"}  # fmt: skip
+    assert second["club"] == "" and second["birth_year"] == "" and second["gender"] == "M"
+
+
+def test_entry_grid_has_hidden_lifter_id(client):
+    _login(client)
+    html = client.get("/admin").text
+    assert 'name="rows-0-lifter_id"' in html and 'type="hidden"' in html
+    assert "admin-entry.js" in html

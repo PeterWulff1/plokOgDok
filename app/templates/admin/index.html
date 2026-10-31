@@ -45,7 +45,7 @@
 
     <fieldset class="csv-box">
       <legend>Upload CSV</legend>
-      <p>Kolonner: <code>{{ columns|join("; ") }}</code>. Forsøg: <code>95</code> = ramt, <code>95x</code> = ikke ramt, tom = intet forsøg.
+      <p>Kolonner: <code>{{ csv_columns|join("; ") }}</code>. Forsøg: <code>95</code> = ramt, <code>95x</code> = ikke ramt, tom = intet forsøg.
         <a href="/admin/skabelon.csv">Hent skabelon</a></p>
       <input type="file" name="csv_file" accept=".csv,text/csv">
       <p class="opt">Vælger du en fil, ignoreres tabellen herunder.</p>
@@ -53,6 +53,7 @@
 
     <fieldset>
       <legend>Eller skriv resultaterne ind</legend>
+      <p class="opt">Skriv et navn og vælg løfteren på listen (↑/↓ og Enter). Så udfyldes køn, født, klub og klasse fra løfterens seneste stævne, og Tab går direkte til vægt og forsøg. Enter springer til næste række.</p>
       <div class="table-wrap">
         <table class="entry-grid" id="entry-grid">
           <thead>
@@ -64,9 +65,9 @@
           <tbody>
             {% for r in rows %}{% set i = loop.index0 %}
             <tr>
-              {% for col in columns %}
-                <td><input name="rows-{{ i }}-{{ col }}" value="{{ r[col] }}" aria-label="{{ col }}, række {{ i + 1 }}"
-                    class="c-{{ loop.index0 }}"{% if col == "køn" %} maxlength="7"{% endif %}></td>
+              {% for col in columns if col != "lifter_id" %}
+                <td>{% if col == "navn" %}<input type="hidden" name="rows-{{ i }}-lifter_id" value="{{ r.lifter_id }}" data-col="lifter_id">{% endif %}<input name="rows-{{ i }}-{{ col }}" value="{{ r[col] }}" aria-label="{{ col }}, række {{ i + 1 }}"
+                    class="c-{{ loop.index0 }}" data-col="{{ col }}"{% if col == "køn" %} maxlength="7"{% endif %}{% if col == "navn" %} autocomplete="off"{% endif %}></td>
               {% endfor %}
             </tr>
             {% endfor %}
@@ -115,19 +116,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-  document.getElementById("add-row").addEventListener("click", function () {
-    const body = document.querySelector("#entry-grid tbody");
-    const last = body.lastElementChild;
-    const index = body.children.length;
-    const row = last.cloneNode(true);
-    row.querySelectorAll("input").forEach(function (input) {
-      input.name = input.name.replace(/^rows-\d+-/, "rows-" + index + "-");
-      input.setAttribute("aria-label", input.getAttribute("aria-label").replace(/\d+$/, index + 1));
-      input.value = "";
-    });
-    body.appendChild(row);
-    row.querySelector("input").focus();
-  });
-</script>
+<script src="{{ static_url('js/admin-entry.js') }}" defer></script>
 {% endblock %}

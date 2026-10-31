@@ -8,6 +8,8 @@ identical. Columns (Danish, case-insensitive, CSV separator ; or ,):
 - køn: M/mand/mænd or K/F/kvinde/kvinder. Required for new lifters.
 - t1-t3 / s1-s3 (snatch/C&J attempts): "95" = made, "95x" or "-95" = missed, blank = no attempt.
 - kropsvægt accepts a decimal comma.
+- lifter_id (optional, our own id) is set by the form's name autocomplete. It pins the row
+  to an existing lifter, so name, vlstat_id and gender are not used for matching.
 """
 
 import csv
@@ -20,10 +22,11 @@ from pydantic import ValidationError
 
 from core.models import Attempt, Discipline, Entry, Gender
 
-COLUMNS = [
+CSV_COLUMNS = [
     "navn", "vlstat_id", "køn", "fødselsår", "klub", "vægtklasse", "kropsvægt",
     "t1", "t2", "t3", "s1", "s2", "s3",
 ]  # fmt: skip
+COLUMNS = [*CSV_COLUMNS, "lifter_id"]  # the form adds a hidden lifter_id
 REQUIRED = {"navn"}
 ATTEMPT_COLUMNS = {
     Discipline.SNATCH: ["t1", "t2", "t3"],
@@ -42,6 +45,7 @@ class ManualRow:
     line: int  # 1-based, as the user sees it (CSV header is line 1)
     entry: Entry
     birth_year: int | None
+    lifter_id: int | None = None  # set when the form's autocomplete picked a lifter
 
 
 @dataclass
@@ -132,6 +136,7 @@ def parse_rows(raw_rows: list[tuple[int, dict[str, str]]]) -> ParsedUpload:
             break
         try:
             entry, birth_year = _row_to_entry(raw)
+            lifter_id = _int(raw.get("lifter_id", ""), "lifter_id")
             if birth_year is not None and not 1900 <= birth_year <= 2100:
                 raise ValueError(f"fødselsår {birth_year} er ikke realistisk")
         except ValidationError as exc:
@@ -140,7 +145,8 @@ def parse_rows(raw_rows: list[tuple[int, dict[str, str]]]) -> ParsedUpload:
         except ValueError as exc:
             out.errors.append(f"Linje {line}: {exc}")
             continue
-        key = (entry.lifter_vlstat_id or entry.lifter_name.lower(), entry.weight_class)
+        who = lifter_id or entry.lifter_vlstat_id or entry.lifter_name.lower()
+        key = (who, entry.weight_class)
         if key in seen:
             out.errors.append(
                 f"Linje {line}: {entry.lifter_name} står to gange i samme vægtklasse "
@@ -148,7 +154,9 @@ def parse_rows(raw_rows: list[tuple[int, dict[str, str]]]) -> ParsedUpload:
             )
             continue
         seen[key] = line
-        out.rows.append(ManualRow(line=line, entry=entry, birth_year=birth_year))
+        out.rows.append(
+            ManualRow(line=line, entry=entry, birth_year=birth_year, lifter_id=lifter_id)
+        )
     if not out.rows and not out.errors:
         out.errors.append("Der er ingen løftere at gemme.")
     return out
@@ -171,7 +179,7 @@ def parse_csv(text: str) -> ParsedUpload:
         if unknown:
             problems.append(f"ukendte kolonner: {', '.join(unknown)}")
         return ParsedUpload(
-            errors=[f"Overskriftslinjen {'; '.join(problems)}. Brug: {'; '.join(COLUMNS)}"]
+            errors=[f"Overskriftslinjen {'; '.join(problems)}. Brug: {'; '.join(CSV_COLUMNS)}"]
         )
     rows = []
     for line, values in enumerate(reader, start=2):

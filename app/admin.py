@@ -11,10 +11,10 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from starlette.datastructures import UploadFile
 
-from core.manual_entry import COLUMNS, ParsedUpload, parse_csv, to_csv
+from core.manual_entry import COLUMNS, CSV_COLUMNS, ParsedUpload, parse_csv, to_csv
 from db import admin as store
 
 router = APIRouter(prefix="/admin")
@@ -128,7 +128,7 @@ def overview(request: Request):
         return redirect
     return _render(
         request, "admin/index.html",
-        competitions=store.manual_competitions(), columns=COLUMNS,
+        competitions=store.manual_competitions(), columns=COLUMNS, csv_columns=CSV_COLUMNS,
         form={"name": "", "date": "", "location": ""}, rows=_blank_rows(),
         saved_id=request.session.pop("saved_id", None),
     )  # fmt: skip
@@ -140,10 +140,26 @@ def csv_template(request: Request):
         return redirect
     example = "Mette Eksempel;;K;1998;AK Eksempel;-64kg;63,4;70;73x;74;88;-92;92\n"
     return PlainTextResponse(
-        ";".join(COLUMNS) + "\n" + example,
+        ";".join(CSV_COLUMNS) + "\n" + example,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="ploek-og-doek-skabelon.csv"'},
     )
+
+
+@router.get("/loeftere")
+def lifter_suggestions(request: Request, q: str = ""):
+    """Name autocomplete for the entry grid. Values come back as the form expects them."""
+    if not _logged_in(request):
+        return JSONResponse({"error": "login"}, status_code=401)
+    return JSONResponse([
+        {
+            "id": r["id"], "name": r["name"], "club": r["club"] or "",
+            "gender": {"M": "M", "F": "K"}.get(r["gender"] or "", ""),
+            "birth_year": r["birth_year"] or "", "weight_class": r["weight_class"] or "",
+            "last_date": r["last_date"].isoformat() if r["last_date"] else "",
+        }
+        for r in store.search_lifters(q[:60])
+    ])  # fmt: skip
 
 
 def _form_rows(form) -> list[dict[str, str]]:
@@ -200,8 +216,8 @@ async def preview(request: Request):
     if errors:
         return _render(
             request, "admin/index.html", status_code=422,
-            competitions=store.manual_competitions(), columns=COLUMNS, form=fields,
-            rows=form_rows or _blank_rows(), errors=errors,
+            competitions=store.manual_competitions(), columns=COLUMNS, csv_columns=CSV_COLUMNS,
+            form=fields, rows=form_rows or _blank_rows(), errors=errors,
         )  # fmt: skip
 
     matches = store.match_lifters(parsed.rows)

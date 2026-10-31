@@ -2,6 +2,17 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-30 — Admin entry grid: name autocomplete pins rows to a lifter
+
+**Decision:** The name cell in the admin entry grid autocompletes from `/admin/loeftere?q=…` (login required, write role, `db/admin.py:search_lifters`). Picking a lifter stores its id in a hidden `lifter_id` column and fills gender, birth year, club (from the lifter's latest competition) and weight class (from the latest competition that had classes, so a CWC doesn't blank it). The filled cells drop out of the Tab order, so typing a meet is name → bodyweight → six attempts. Attempt cells turn green/red as you type. Enter moves to the next row instead of submitting.
+- Matching: a row with `lifter_id` is matched by id only and is never ambiguous; an unknown id blocks the row. Without it the old rules apply (vlstat_id, then exact name + gender, else new lifter).
+- `lifter_id` is an optional column in `core/manual_entry.py` (`COLUMNS`). The CSV template and help text use `CSV_COLUMNS`, which leave it out.
+- Search: every typed word must appear in the name (`ILIKE ALL`, wildcards escaped), names starting with the first word first, then the most recently active.
+
+**Reason:** Typing 13 cells per lifter was slow, and namesakes forced the user to look up a vlstat_id. The class is a suggestion from the last meet (chosen over computing it from bodyweight, which would need class tables per age group and year); it can be overwritten.
+
+**Rejected for now:** adding a whole club or copying an earlier meet's lifters, pasting from Excel, and warnings for typos (e.g. `950`).
+
 ## 2026-10-30 — Club roster: filters and sorting in the browser (migration 015)
 
 **Decision:** The club roster is one table (active and former lifters together) with filters for status (Aktive / Tidligere / Alle, default Aktive), gender and age group, and sorting by clicking a column header.

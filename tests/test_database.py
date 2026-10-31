@@ -140,3 +140,28 @@ def test_age_group_boundaries(conn):
              21: "senior", 34: "senior", 35: "master", 70: "master"}  # fmt: skip
     for age, group in cases.items():
         assert conn.execute("SELECT vl.age_group(%s)", (age,)).fetchone()[0] == group
+
+
+def test_admin_lifter_search_and_match_by_id(conn, raw_dir, monkeypatch):
+    from core.manual_entry import parse_rows
+    from db import admin as store
+
+    seed(conn, load_dataset(raw_dir))
+    lifter_id, name = conn.execute("SELECT id, name FROM vl.lifter ORDER BY id LIMIT 1").fetchone()
+    monkeypatch.setenv("DATABASE_URL_WRITE", URL)
+    monkeypatch.setattr(store, "_pool", None)
+    try:
+        words = name.split()
+        found = store.search_lifters(f"{words[-1][:3]} {words[0][:3]}".lower())
+        assert lifter_id in [f["id"] for f in found]
+        hit = next(f for f in found if f["id"] == lifter_id)
+        assert hit["last_date"] is not None and {"club", "weight_class", "birth_year"} <= set(hit)
+        assert store.search_lifters("%") == [] and store.search_lifters("_ _") == []
+
+        rows = parse_rows([(2, {"navn": "Stavet Forkert", "lifter_id": str(lifter_id)}),
+                           (3, {"navn": "Ingen", "lifter_id": "999999"})]).rows  # fmt: skip
+        good, bad = store.match_lifters(rows)
+        assert good.kind == "existing" and good.lifter_id == lifter_id
+        assert bad.kind == "problem" and "999999" in bad.message
+    finally:
+        store.close_pool()

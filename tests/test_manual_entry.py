@@ -83,3 +83,26 @@ def test_to_csv_roundtrip_drops_blank_rows():
     rows = [dict.fromkeys(COLUMNS, ""), {**dict.fromkeys(COLUMNS, ""), "navn": "Ole", "køn": "M"}]
     result = parse_csv(to_csv(rows))
     assert result.ok and [r.entry.lifter_name for r in result.rows] == ["Ole"]
+
+
+def test_lifter_id_from_autocomplete_is_kept():
+    rows = [(2, {"navn": "Ole", "lifter_id": "17", "t1": "100"})]
+    result = parse_rows(rows)
+    assert result.ok and result.rows[0].lifter_id == 17
+    assert parse_rows([(2, {"navn": "Ole", "køn": "M"})]).rows[0].lifter_id is None
+
+
+def test_lifter_id_must_be_a_number():
+    result = parse_rows([(2, {"navn": "Ole", "lifter_id": "abc"})])
+    assert result.errors and "lifter_id" in result.errors[0]
+
+
+def test_same_lifter_id_twice_in_a_class_is_an_error():
+    row = {"navn": "Ole", "lifter_id": "17", "vægtklasse": "-81kg"}
+    result = parse_rows([(2, row), (3, {**row, "navn": "Ole H."})])
+    assert len(result.rows) == 1 and "også linje 2" in result.errors[0]
+
+
+def test_to_csv_keeps_lifter_id_for_the_save_step():
+    rows = [{**dict.fromkeys(COLUMNS, ""), "navn": "Ole", "lifter_id": "17"}]
+    assert parse_csv(to_csv(rows)).rows[0].lifter_id == 17

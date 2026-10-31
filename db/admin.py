@@ -5,6 +5,7 @@ admin page can never damage data that came from vlstat.dk.
 """
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -49,6 +50,18 @@ class LifterMatch:
 
 def _match_one(conn: Connection, row: ManualRow) -> LifterMatch:
     e = row.entry
+    if row.lifter_id is not None:
+        found = conn.execute(
+            """
+            SELECT l.id, l.name, s.club
+            FROM vl.lifter l LEFT JOIN vl.mv_lifter_summary s ON s.lifter_id = l.id
+            WHERE l.id = %s
+            """,
+            (row.lifter_id,),
+        ).fetchone()
+        if found:
+            return LifterMatch("existing", found["id"], found["name"], found["club"])
+        return LifterMatch("problem", message=f"løfter-id {row.lifter_id} findes ikke")
     if e.lifter_vlstat_id is not None:
         found = conn.execute(
             "SELECT id, name FROM vl.lifter WHERE vlstat_id = %s", (e.lifter_vlstat_id,)
@@ -79,6 +92,41 @@ def _match_one(conn: Connection, row: ManualRow) -> LifterMatch:
     if e.gender is None:
         return LifterMatch("problem", message="ny løfter: angiv køn (M/K)")
     return LifterMatch("new")
+
+
+def search_lifters(query: str, limit: int = 8) -> list[dict]:
+    """Name autocomplete for the entry form: every word must appear in the name.
+    Returns what the form pre-fills: club from the lifter's latest competition, class from
+    the latest one that had weight classes."""
+    words = [re.sub(r"([\\%_])", r"\\\1", w) for w in query.split()]  # literal, not wildcards
+    if len(" ".join(words)) < 2:
+        return []
+    with _conn() as conn:
+        return conn.execute(
+            """
+            SELECT l.id, l.name, l.gender, l.birth_year,
+                   last.club, cls.weight_class, last.date AS last_date
+            FROM vl.lifter l
+            LEFT JOIN LATERAL (
+                SELECT e.club, c.date
+                FROM vl.entry e JOIN vl.competition c ON c.id = e.competition_id
+                WHERE e.lifter_id = l.id
+                ORDER BY c.date DESC, e.id DESC
+                LIMIT 1
+            ) last ON true
+            LEFT JOIN LATERAL (  -- skip gender-only meets (CWC), which have no class
+                SELECT e.weight_class
+                FROM vl.entry e JOIN vl.competition c ON c.id = e.competition_id
+                WHERE e.lifter_id = l.id AND e.weight_class IS NOT NULL
+                ORDER BY c.date DESC, e.id DESC
+                LIMIT 1
+            ) cls ON true
+            WHERE l.name ILIKE ALL (%s)
+            ORDER BY (l.name ILIKE %s) DESC, last.date DESC NULLS LAST, l.name
+            LIMIT %s
+            """,
+            ([f"%{w}%" for w in words], f"{words[0]}%", limit),
+        ).fetchall()
 
 
 def match_lifters(rows: list[ManualRow]) -> list[LifterMatch]:
