@@ -22,7 +22,12 @@ from dotenv import load_dotenv
 from core.lifters import derive_birth_year, resolve_gender
 from core.models import Competition, Entry, Gender, Lifter
 from scraper.fetch_raw import RAW_DIR
-from scraper.parse_results import PageFormatError, parse_competition_label, parse_results_page
+from scraper.parse_results import (
+    PageFormatError,
+    parse_competition_label,
+    parse_option_date,
+    parse_results_page,
+)
 
 
 @dataclass
@@ -39,15 +44,19 @@ def load_dataset(raw_dir: Path = RAW_DIR) -> Dataset:
     ages: dict[int, list[tuple[int, int]]] = defaultdict(list)
 
     for index_path in sorted(raw_dir.glob("*/index.json")):
-        labels = {e["id"]: e["label"] for e in json.loads(index_path.read_text(encoding="utf-8"))}
+        events = {e["id"]: e for e in json.loads(index_path.read_text(encoding="utf-8"))}
         for page in sorted(index_path.parent.glob("*.html")):
             where = f"{index_path.parent.name}/{page.name}"
-            label = labels.get(page.stem)
-            if label is None:
+            event = events.get(page.stem)
+            if event is None:
                 data.errors.append(f"{where}: not in index.json")
                 continue
             try:
-                comp_date, comp_name = parse_competition_label(label)
+                if event.get("date"):  # newer dropdown: name only, date in data-date
+                    comp_name = " ".join(event["label"].split())
+                    comp_date = parse_option_date(event["date"], int(index_path.parent.name))
+                else:
+                    comp_date, comp_name = parse_competition_label(event["label"])
                 result = parse_results_page(page.read_text(encoding="utf-8"))
             except PageFormatError as exc:
                 data.errors.append(f"{where}: {exc}")

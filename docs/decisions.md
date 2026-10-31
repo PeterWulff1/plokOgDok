@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-31 — vlstat's competition dropdown no longer shows the date
+
+**Change on vlstat.dk:** The competition options used to read `12okt2026 -  U23 EM 2026`. Now the text is the name only and the day and month are in `data-date="12-okt"`; the year is the one picked in the year dropdown.
+
+**Decision:** `fetch_raw` saves `data-date` as `date` in `index.json`. `parse_and_seed` uses `date` plus the year folder when it's there, and the old dated label otherwise, so older index files still load. The 2026 index (overwritten without dates by the first harvest after the change) was rebuilt from the dropdown saved inside a page; all 41 previously known competitions got the same date and name as before.
+
 ## 2026-10-30 — Admin entry grid: name autocomplete pins rows to a lifter
 
 **Decision:** The name cell in the admin entry grid autocompletes from `/admin/loeftere?q=…` (login required, write role, `db/admin.py:search_lifters`). Picking a lifter stores its id in a hidden `lifter_id` column and fills gender, birth year, club (from the lifter's latest competition) and weight class (from the latest competition that had classes, so a CWC doesn't blank it). The filled cells drop out of the Tab order, so typing a meet is name → bodyweight → six attempts. Attempt cells turn green/red as you type. Enter moves to the next row instead of submitting.

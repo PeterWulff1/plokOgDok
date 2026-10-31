@@ -6,7 +6,13 @@ import pytest
 
 from core.models import Discipline, Gender
 from scraper.fetch_raw import strip_state_fields
-from scraper.parse_results import PageFormatError, parse_competition_label, parse_results_page
+from scraper.parse_and_seed import load_dataset
+from scraper.parse_results import (
+    PageFormatError,
+    parse_competition_label,
+    parse_option_date,
+    parse_results_page,
+)
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "results_sample.html").read_text(encoding="utf-8")
 
@@ -129,3 +135,33 @@ def test_strip_state_fields():
     assert strip_state_fields(html) == (
         '<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="" />'
     )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("24-okt", date(2026, 10, 24)), ("03-jan", date(2026, 1, 3)), ("3-Maj", date(2026, 5, 3))],
+)
+def test_option_date(text, expected):
+    assert parse_option_date(text, 2026) == expected
+
+
+@pytest.mark.parametrize("text", ["", "24okt", "24-xyz", "Øst junior 2026"])
+def test_bad_option_date_raises(text):
+    with pytest.raises(PageFormatError):
+        parse_option_date(text, 2026)
+
+
+def test_index_in_both_formats(tmp_path):
+    """Old index.json labels carry the date; newer ones keep it in a separate field."""
+    year = tmp_path / "2026"
+    year.mkdir()
+    for page in ("100", "101"):
+        (year / f"{page}.html").write_text(FIXTURE, encoding="utf-8")
+    (year / "index.json").write_text(
+        '[{"id": "100", "label": "12okt2026 -  U23 EM 2026"},'
+        ' {"id": "101", "label": "Øst  junior 2026", "date": "24-okt"}]',
+        encoding="utf-8",
+    )
+    comps = {c.vlstat_id: (c.date, c.name) for c, _ in load_dataset(tmp_path).competitions}
+    assert comps == {100: (date(2026, 10, 12), "U23 EM 2026"),
+                     101: (date(2026, 10, 24), "Øst junior 2026")}  # fmt: skip

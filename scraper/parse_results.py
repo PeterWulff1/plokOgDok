@@ -42,6 +42,7 @@ DANISH_MONTHS = {
     "jul": 7, "aug": 8, "sep": 9, "okt": 10, "nov": 11, "dec": 12,
 }  # fmt: skip
 _LABEL_RE = re.compile(r"^\s*(\d{1,2})([a-zæøå]{3})(\d{4})\s*-\s*(.+?)\s*$", re.IGNORECASE)
+_OPTION_DATE_RE = re.compile(r"^\s*(\d{1,2})-([a-zæøå]{3})\s*$", re.IGNORECASE)
 
 
 class PageFormatError(ValueError):
@@ -79,6 +80,19 @@ def parse_competition_label(label: str) -> tuple[date, str]:
     if month_number is None:
         raise PageFormatError(f"unknown month {month!r} in {label!r}")
     return date(int(year), month_number, int(day)), name
+
+
+def parse_option_date(text: str, year: int) -> date:
+    """'24-okt', 2026 -> date(2026, 10, 24). Since Oct 2026 vlstat's competition dropdown
+    shows only the name and puts the day and month in the option's data-date attribute;
+    the year is the year selected in the other dropdown."""
+    m = _OPTION_DATE_RE.match(text)
+    if not m:
+        raise PageFormatError(f"unrecognised competition date: {text!r}")
+    month_number = DANISH_MONTHS.get(m.group(2).lower())
+    if month_number is None:
+        raise PageFormatError(f"unknown month {m.group(2)!r} in {text!r}")
+    return date(year, month_number, int(m.group(1)))
 
 
 def _text(cell: Tag) -> str:
