@@ -165,3 +165,36 @@ def test_admin_lifter_search_and_match_by_id(conn, raw_dir, monkeypatch):
         assert bad.kind == "problem" and "999999" in bad.message
     finally:
         store.close_pool()
+
+
+def test_calendar_sync_adds_changes_and_removes(conn):
+    from datetime import UTC, date, datetime, timedelta
+
+    from core.models import CalendarEvent
+    from scraper.fetch_calendar import store
+
+    start = date.today()
+    modified = datetime(2026, 9, 1, tzinfo=UTC)
+
+    def event(source_id, title, days, mod=modified):
+        when = datetime.combine(start + timedelta(days=days), datetime.min.time())
+        return CalendarEvent(
+            source_id=source_id, title=title, starts_at=when, ends_at=when, all_day=True,
+            url=f"https://vaegtloeftning.dk/e/{source_id}/", source_modified=mod,
+        )  # fmt: skip
+
+    first = [event(1, "DM Senior", 10), event(2, "Trænerkursus trin 1", 20), event(3, "Gone", 30)]
+    report = store(conn, first, {1, 2, 3}, start)
+    assert len(report.added) == 3 and not report.changed and not report.removed
+
+    later = modified + timedelta(days=1)
+    second = [event(1, "DM Senior", 10), event(2, "Trænerkursus trin 1", 21, later)]
+    report = store(conn, second, {1, 2}, start)
+    assert not report.added
+    assert [e.source_id for e in report.changed] == [2]
+    assert [title for _, title in report.removed] == ["Gone"]
+
+    kinds = conn.execute(
+        "SELECT source_id, kind, is_abroad, is_new FROM vl.v_calendar_event ORDER BY 1"
+    ).fetchall()
+    assert kinds == [(1, "staevne", False, False), (2, "kursus", False, False)]

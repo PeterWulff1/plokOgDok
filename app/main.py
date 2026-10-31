@@ -79,8 +79,19 @@ def front_page(request: Request):
         request,
         "index.html",
         competitions=queries.latest_competitions(12),
+        upcoming=queries.upcoming_events(4, meets_only=True),
         totals=queries.site_totals(),
         logos=random.sample(CLUB_LOGOS, len(CLUB_LOGOS)),
+    )
+
+
+@app.get("/kalender", response_class=HTMLResponse)
+def calendar_page(request: Request):
+    return _render(
+        request,
+        "calendar.html",
+        months=queries.calendar_months(),
+        synced_at=queries.calendar_synced_at(),
     )
 
 

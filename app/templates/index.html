@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import event_row %}
 
 {% block content %}
 <section class="hero" id="sog">
@@ -36,6 +37,25 @@
   </div>
   {% endif %}
 </section>
+
+{% if upcoming %}
+<section class="section" id="kommende">
+  <div class="section-head">
+    <h2>Kommende stævner</h2>
+    <a class="kicker" href="/kalender">Hele kalenderen</a>
+  </div>
+  <div class="table-wrap">
+    <table class="calendar">
+      <thead>
+        <tr><th>Dato</th><th>Stævne</th></tr>
+      </thead>
+      <tbody>
+        {% for e in upcoming %}{{ event_row(e) }}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
 
 <section class="section" id="staevner">
   <div class="section-head">

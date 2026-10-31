@@ -2,6 +2,20 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-31 — Calendar from vaegtloeftning.dk/kalender, synced daily (migration 016)
+
+**Decision:** The site gets a calendar page `/kalender` and a "Kommende stævner" block on the front page. Data comes from the federation's calendar at vaegtloeftning.dk. `scraper/fetch_calendar.py` reads the site's own events API (`/wp-json/tribe/events/v1/events`, from the WordPress plugin The Events Calendar) and upserts into `vl.calendar_event`, keyed on the source's event ID. A Windows scheduled task ("PloekOgDoek kalender-sync", daily 07:00, catches up after a missed run) runs `scripts/sync_calendar.cmd`, which logs to `data/logs/calendar-sync.log`.
+
+**Reason:** The API holds the same events as the page, with stable IDs and a modified time, so there's no HTML scraping and no guessing at date formats. `robots.txt` only blocks `/wp-admin/`, and the site's own iCal feed suggests refreshing hourly, so one request a day is very light.
+
+**Consequences:**
+- Load: usually one request a day (50 events per page, 3 s between pages). Any HTTP error, non-JSON answer, missing events or an empty calendar stops the run without touching the database. The next day tries again.
+- Only title, dates, venue, city, country and the event's URL are stored. Descriptions and organisers aren't stored, because they contain names, emails and phone numbers. The page links to the federation's page for registration and contact.
+- Upcoming events that disappear from the source are deleted (cancelled or unpublished). Events that fail validation are skipped but never deleted. Past events stay.
+- `v_calendar_event` derives `kind` (stævne/kursus/møde) from the title, because the source has no category for it, plus `is_abroad` (only when the source names a non-Danish country) and `is_new` (first seen in the last 14 days, not counting the first sync).
+- The website still never contacts any outside site. It only reads the table through the view.
+- When the site is hosted, move the same command to the host's scheduler and remove the Windows task.
+
 ## 2026-10-31 — vlstat's competition dropdown no longer shows the date
 
 **Change on vlstat.dk:** The competition options used to read `12okt2026 -  U23 EM 2026`. Now the text is the name only and the day and month are in `data-date="12-okt"`; the year is the one picked in the year dropdown.

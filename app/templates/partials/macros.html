@@ -49,3 +49,25 @@
 {% macro debut(r) -%}
   {%- if r.is_debut %} · <span class="debut">debut</span>{% endif -%}
 {%- endmacro %}
+
+{# One calendar row: dates, title linked to the federation's page, then what we know about
+   it. Meets are the default; courses and meetings are named. #}
+{% macro event_row(e) -%}
+<tr>
+  <td class="tab">{{ e.start_date|dk_date_range(e.end_date) }}</td>
+  <td>
+    <a class="name-link" href="{{ e.url }}" rel="noopener">{{ e.title }}</a>
+    {%- set bits = [] %}
+    {%- if e.kind != "staevne" %}{% set _ = bits.append(e.kind|event_kind) %}{% endif %}
+    {%- set place = [e.venue, e.city]|select|join(", ") %}
+    {%- if place %}{% set _ = bits.append(place) %}{% endif %}
+    {%- if e.is_abroad %}{% set _ = bits.append("udland") %}{% endif %}
+    {%- if bits or e.is_new %}
+    <span class="sub">
+      {{- bits|join(" · ") }}
+      {%- if e.is_new %}{% if bits %} · {% endif %}<span class="added">tilføjet {{ e.first_seen_at.date()|dk_date(with_year=false) }}</span>{% endif -%}
+    </span>
+    {%- endif %}
+  </td>
+</tr>
+{%- endmacro %}

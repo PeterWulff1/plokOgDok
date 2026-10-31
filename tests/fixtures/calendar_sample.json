@@ -1,0 +1,54 @@
+{
+  "events": [
+    {
+      "id": 15556,
+      "status": "publish",
+      "hide_from_listings": false,
+      "modified_utc": "2026-09-25 07:49:59",
+      "url": "https://vaegtloeftning.dk/eventevents/aalborg-cup-4/",
+      "title": "AK Gotha&#8217;s  Fødselsdagsstævne",
+      "start_date": "2026-12-12 10:00:00",
+      "end_date": "2026-12-12 16:00:00",
+      "all_day": false,
+      "venue": {"id": 11418, "venue": "AK Gotha", "city": "København SV", "country": "Denmark"}
+    },
+    {
+      "id": 15904,
+      "status": "publish",
+      "hide_from_listings": false,
+      "modified_utc": "2026-08-28 08:55:34",
+      "url": "https://vaegtloeftning.dk/eventevents/5th-trofeo-ciutat-de-palma/",
+      "title": "5th Trofeo ciutat de Palma",
+      "start_date": "2026-11-13 00:00:00",
+      "end_date": "2026-11-14 23:59:59",
+      "all_day": true,
+      "venue": []
+    },
+    {
+      "id": 16001,
+      "status": "publish",
+      "hide_from_listings": true,
+      "modified_utc": "2026-08-28 08:55:34",
+      "url": "https://vaegtloeftning.dk/eventevents/hidden/",
+      "title": "Skjult",
+      "start_date": "2026-11-20 08:00:00",
+      "end_date": "2026-11-20 17:00:00",
+      "all_day": false,
+      "venue": []
+    },
+    {
+      "id": 16002,
+      "status": "publish",
+      "hide_from_listings": false,
+      "modified_utc": "2026-08-28 08:55:34",
+      "url": "https://vaegtloeftning.dk/eventevents/broken/",
+      "title": "Slutter før start",
+      "start_date": "2026-11-21 17:00:00",
+      "end_date": "2026-11-21 08:00:00",
+      "all_day": false,
+      "venue": []
+    }
+  ],
+  "total": 4,
+  "total_pages": 1
+}

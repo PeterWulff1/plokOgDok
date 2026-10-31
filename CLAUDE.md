@@ -20,6 +20,7 @@ The full specification is in `docs/plandokument.md` (Danish). Read the section y
 scraper/fetch_raw.py      # Phase 1: save Results.aspx pages to data/raw_html/
 scraper/parse_results.py  # Pure parser: one saved page -> Entry models
 scraper/parse_and_seed.py # Phase 2: parse all saved pages, upsert into the database
+scraper/fetch_calendar.py # Daily sync of vaegtloeftning.dk/kalender (events API) into vl.calendar_event
 db/migrations/            # Numbered SQL files: schema, roles, views. Never edit an applied one.
 db/migrate.py             # Applies pending migrations
 core/models.py            # Shared Pydantic models (Lifter, Competition, Entry, Attempt)
@@ -47,6 +48,7 @@ docs/                     # plandokument.md, decisions.md
 - Phase 2 check: `uv run python -m scraper.parse_and_seed --dry-run`
 - Phase 2 seed: `uv run python -m scraper.parse_and_seed`
 - Sinclair fit: `uv run python -m scripts.fit_sinclair`
+- Calendar sync: `uv run python -m scraper.fetch_calendar [--dry-run]` (runs daily via the Windows task "PloekOgDoek kalender-sync")
 - Check every page of the site: `uv run python -m scripts.check_site` (run after UI or view changes)
 - Run website: `uv run uvicorn app.main:app --reload` (then http://127.0.0.1:8000)
 - Admin: http://127.0.0.1:8000/admin (password `ADMIN_PASSWORD` in `.env`)

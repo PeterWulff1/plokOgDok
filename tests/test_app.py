@@ -1,5 +1,5 @@
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -28,6 +28,24 @@ def test_pct_and_signed_pct():
 def test_dk_date():
     assert formatting.dk_date(date(2026, 10, 12)) == "12. okt. 2026"
     assert formatting.dk_date(date(2026, 5, 3), with_year=False) == "3. maj"
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "expected"),
+    [
+        (date(2026, 11, 7), date(2026, 11, 7), "7. nov. 2026"),
+        (date(2026, 11, 13), date(2026, 11, 14), "13.–14. nov. 2026"),
+        (date(2027, 1, 30), date(2027, 2, 1), "30. jan.–1. feb. 2027"),
+        (date(2026, 12, 30), date(2027, 1, 2), "30. dec. 2026–2. jan. 2027"),
+    ],
+)
+def test_dk_date_range(start, end, expected):
+    assert formatting.dk_date_range(start, end) == expected
+
+
+def test_dk_month_and_event_kind():
+    assert formatting.dk_month(date(2026, 11, 1)) == "november 2026"
+    assert formatting.event_kind("kursus") == "Kursus"
 
 
 def test_progression_series_is_oldest_first_and_skips_debut_prs():
@@ -127,6 +145,18 @@ AGES = [{"year": 2019, "year_lifters": 2, "groups": [
     {"age_group": "ukendt", "lifters": 1, "share_of_max": Decimal("0.5")}]}]  # fmt: skip
 
 
+EVENT = {
+    "event_id": 1, "source_id": 15556, "title": "Ladies Open",
+    "start_date": date(2027, 1, 9), "end_date": date(2027, 1, 9), "all_day": False,
+    "venue": "AK. Atlas", "city": "Slagelse", "url": "https://vaegtloeftning.dk/eventevents/ladies-open/",
+    "first_seen_at": datetime(2026, 10, 28, 6, tzinfo=UTC), "kind": "staevne",
+    "is_abroad": False, "is_new": True,
+}  # fmt: skip
+COURSE = dict(EVENT, event_id=2, title="Trænerkursus trin 1", venue=None, city=None,
+              kind="kursus", is_new=False, start_date=date(2027, 1, 15),
+              end_date=date(2027, 1, 16))  # fmt: skip
+
+
 @pytest.fixture
 def client(monkeypatch):
     """App with the database replaced by canned rows."""
@@ -154,6 +184,11 @@ def client(monkeypatch):
     )
     monkeypatch.setattr(q, "club_age_profile", lambda club: AGES)
     monkeypatch.setattr(q, "competition_summary", lambda competition_id: None)
+    monkeypatch.setattr(q, "upcoming_events", lambda limit=None, meets_only=False: [EVENT])
+    monkeypatch.setattr(
+        q, "calendar_months", lambda: [{"month": date(2027, 1, 1), "events": [EVENT, COURSE]}]
+    )
+    monkeypatch.setattr(q, "calendar_synced_at", lambda: datetime(2026, 10, 31, 6, tzinfo=UTC))
     with TestClient(app_main.app) as c:
         yield c
 
@@ -162,6 +197,18 @@ def test_front_page(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "Pløk" in r.text and "vlstat.dk" in r.text
+    assert "Kommende stævner" in r.text and "Ladies Open" in r.text
+
+
+def test_calendar_page(client):
+    r = client.get("/kalender")
+    assert r.status_code == 200
+    text = r.text
+    assert "januar 2027" in text and "hentet 31. okt. 2026" in text
+    assert 'href="https://vaegtloeftning.dk/eventevents/ladies-open/"' in text
+    assert "AK. Atlas, Slagelse" in text and "tilføjet 28. okt." in text
+    assert "15.–16. jan. 2027" in text and "Kursus ·" not in text and "Kursus" in text
+    assert "None" not in text
 
 
 def test_club_logos_exist_and_wheel_renders(client):

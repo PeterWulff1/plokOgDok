@@ -351,3 +351,31 @@ def club_age_profile(club: str) -> list[Row]:
             years.append({"year": r["year"], "year_lifters": r["year_lifters"], "groups": []})
         years[-1]["groups"].append(r)
     return years
+
+
+# --- Calendar (vaegtloeftning.dk/kalender, migration 016) ----------------------------
+
+
+def upcoming_events(limit: int | None = None, meets_only: bool = False) -> list[Row]:
+    return _all(
+        """
+        SELECT * FROM vl.v_calendar_event
+        WHERE end_date >= current_date AND (NOT %s OR kind = 'staevne')
+        ORDER BY start_date, title
+        LIMIT %s
+        """,
+        (meets_only, limit),
+    )
+
+
+def calendar_months() -> list[Row]:
+    """Upcoming events grouped by the month they start in, soonest first."""
+    months: dict = defaultdict(list)
+    for event in upcoming_events():
+        months[event["start_date"].replace(day=1)].append(event)
+    return [{"month": month, "events": events} for month, events in months.items()]
+
+
+def calendar_synced_at():
+    """When the daily sync last saw the calendar, or None before the first sync."""
+    return _one("SELECT max(last_seen_at) AS synced_at FROM vl.v_calendar_event")["synced_at"]

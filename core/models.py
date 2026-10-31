@@ -3,7 +3,7 @@
 Reuse these everywhere (scraper, seed, admin page). Don't create parallel models.
 """
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -66,4 +66,26 @@ class Entry(_Frozen):
         slots = [(a.discipline, a.attempt_number) for a in self.attempts]
         if len(slots) != len(set(slots)):
             raise ValueError("duplicate attempt slot (discipline, attempt_number)")
+        return self
+
+
+class CalendarEvent(_Frozen):
+    """One event from the federation's calendar (vaegtloeftning.dk/kalender)."""
+
+    source_id: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    # Danish local time, as the source gives it (naive).
+    starts_at: datetime
+    ends_at: datetime
+    all_day: bool
+    venue: str | None = None
+    city: str | None = None
+    country: str | None = None
+    url: str = Field(pattern=r"^https://vaegtloeftning\.dk/")
+    source_modified: datetime
+
+    @model_validator(mode="after")
+    def _ends_after_start(self) -> "CalendarEvent":
+        if self.ends_at < self.starts_at:
+            raise ValueError("event ends before it starts")
         return self

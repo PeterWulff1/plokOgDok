@@ -6,8 +6,11 @@ from typing import Any
 
 MONTHS = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.",
           "jul.", "aug.", "sep.", "okt.", "nov.", "dec."]  # fmt: skip
+MONTH_NAMES = ["januar", "februar", "marts", "april", "maj", "juni", "juli",
+               "august", "september", "oktober", "november", "december"]  # fmt: skip
 GENDER_LABEL = {"M": "Mænd", "F": "Kvinder"}
 DISCIPLINE_LABEL = {"snatch": "Træk", "cj": "Stød"}
+EVENT_KIND_LABEL = {"staevne": "Stævne", "kursus": "Kursus", "moede": "Møde"}
 
 
 def num(value: Any, decimals: int = 0) -> str:
@@ -43,6 +46,26 @@ def dk_date(value: date | None, with_year: bool = True) -> str:
     return f"{text} {value.year}" if with_year else text
 
 
+def dk_date_range(start: date, end: date | None) -> str:
+    """'7. nov. 2026', '13.–14. nov. 2026', '30. jan.–1. feb. 2027'."""
+    if end is None or end == start:
+        return dk_date(start)
+    if (start.year, start.month) == (end.year, end.month):
+        return f"{start.day}.–{dk_date(end)}"
+    if start.year == end.year:
+        return f"{dk_date(start, with_year=False)}–{dk_date(end)}"
+    return f"{dk_date(start)}–{dk_date(end)}"
+
+
+def dk_month(value: date) -> str:
+    """date(2026, 11, 1) -> 'november 2026'."""
+    return f"{MONTH_NAMES[value.month - 1]} {value.year}"
+
+
+def event_kind(value: str) -> str:
+    return EVENT_KIND_LABEL.get(value, value)
+
+
 def gender(value: str | None) -> str:
     return GENDER_LABEL.get(value or "", "")
 
@@ -75,6 +98,9 @@ FILTERS = {
     "css_pct": css_pct,
     "signed_pct": signed_pct,
     "dk_date": dk_date,
+    "dk_date_range": dk_date_range,
+    "dk_month": dk_month,
+    "event_kind": event_kind,
     "gender": gender,
     "discipline": discipline,
 }

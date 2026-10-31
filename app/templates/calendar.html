@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import event_row %}
+
+{% block title %}Kalender · Pløk og Døk{% endblock %}
+{% block description %}Kommende stævner, kurser og møder i dansk vægtløftning, fra Dansk Vægtløftnings-Forbunds kalender.{% endblock %}
+
+{% block content %}
+<section class="profile-head">
+  <p class="kicker">Fra Dansk Vægtløftnings-Forbunds kalender{% if synced_at %} · hentet {{ synced_at.date()|dk_date }}{% endif %}</p>
+  <h1>Kalender</h1>
+</section>
+
+{% for m in months %}
+<section class="section">
+  <div class="section-head">
+    <h2>{{ m.month|dk_month }}</h2>
+    <span class="kicker">{{ m.events|length }} {{ "begivenhed" if m.events|length == 1 else "begivenheder" }}</span>
+  </div>
+  <div class="table-wrap">
+    <table class="calendar">
+      <thead>
+        <tr><th>Dato</th><th>Begivenhed</th></tr>
+      </thead>
+      <tbody>
+        {% for e in m.events %}{{ event_row(e) }}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+<p class="notice">Kalenderen er ikke hentet endnu.</p>
+{% endfor %}
+
+<p class="chart-note">Titler, datoer og steder er fra <a href="https://vaegtloeftning.dk/kalender/" rel="noopener">vaegtloeftning.dk/kalender</a>. Tilmelding, startlister og kontakt står på forbundets side for hver begivenhed.</p>
+{% endblock %}
