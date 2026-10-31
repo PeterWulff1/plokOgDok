@@ -15,11 +15,20 @@ import re
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from bs4 import BeautifulSoup, Tag
 from pydantic import ValidationError
 
 from core.models import Attempt, Discipline, Entry, Gender
+
+# Where the harvester (scraper/fetch_raw.py, kept out of git) saves pages.
+RAW_DIR = Path("data/raw_html/competitions")
+
+# __VIEWSTATE / __EVENTVALIDATION are huge and carry no result data.
+_STATE_FIELD_RE = re.compile(
+    r'(<input[^>]*name="(?:__VIEWSTATE|__EVENTVALIDATION)"[^>]*value=")[^"]*(")'
+)
 
 EXPECTED_HEADERS = [
     "Id", "", "", "Navn", "Klub", "Alder", "Vægt",
@@ -36,6 +45,12 @@ ATTEMPT_CELLS = {
     Discipline.CLEAN_AND_JERK: [(1, 14), (2, 16), (3, 18)],
 }
 GENDER_WORDS = {"mænd": Gender.MALE, "kvinder": Gender.FEMALE}
+
+
+def strip_state_fields(html: str) -> str:
+    """Blank the ASP.NET state fields before a page is saved."""
+    return _STATE_FIELD_RE.sub(r"\1\2", html)
+
 
 DANISH_MONTHS = {
     "jan": 1, "feb": 2, "mar": 3, "apr": 4, "maj": 5, "jun": 6,

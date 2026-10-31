@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 
 from core.lifters import derive_birth_year, resolve_gender
 from core.models import Competition, Entry, Gender, Lifter
-from scraper.fetch_raw import RAW_DIR
 from scraper.parse_results import (
+    RAW_DIR,
     PageFormatError,
     parse_competition_label,
     parse_option_date,

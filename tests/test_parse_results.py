@@ -5,13 +5,13 @@ from pathlib import Path
 import pytest
 
 from core.models import Discipline, Gender
-from scraper.fetch_raw import strip_state_fields
 from scraper.parse_and_seed import load_dataset
 from scraper.parse_results import (
     PageFormatError,
     parse_competition_label,
     parse_option_date,
     parse_results_page,
+    strip_state_fields,
 )
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "results_sample.html").read_text(encoding="utf-8")

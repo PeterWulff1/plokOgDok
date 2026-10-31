@@ -2,6 +2,16 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-10-31 — The vlstat.dk harvester is kept out of git
+
+**Decision:** `scraper/fetch_raw.py`, the only code that contacts vlstat.dk, is gitignored and was removed from the git history before the first push to GitHub. It stays on the developer's machine. `RAW_DIR` and `strip_state_fields` moved to `scraper/parse_results.py`, so the parser, the seed, the Sinclair fit and the tests don't import it.
+
+**Reason:** The user doesn't want the vlstat scraper published, even in a private repository.
+
+**Consequences:**
+- A fresh clone can parse and seed from saved pages, but can't harvest new ones. Keep a backup of `fetch_raw.py` outside git.
+- The harvester's behaviour and load rules stay documented in CLAUDE.md and this file.
+
 ## 2026-10-31 — Calendar from vaegtloeftning.dk/kalender, synced daily (migration 016)
 
 **Decision:** The site gets a calendar page `/kalender` and a "Kommende stævner" block on the front page. Data comes from the federation's calendar at vaegtloeftning.dk. `scraper/fetch_calendar.py` reads the site's own events API (`/wp-json/tribe/events/v1/events`, from the WordPress plugin The Events Calendar) and upserts into `vl.calendar_event`, keyed on the source's event ID. A Windows scheduled task ("PloekOgDoek kalender-sync", daily 07:00, catches up after a missed run) runs `scripts/sync_calendar.cmd`, which logs to `data/logs/calendar-sync.log`.

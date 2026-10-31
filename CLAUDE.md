@@ -17,8 +17,8 @@ The full specification is in `docs/plandokument.md` (Danish). Read the section y
 ## Project layout
 
 ```
-scraper/fetch_raw.py      # Phase 1: save Results.aspx pages to data/raw_html/
-scraper/parse_results.py  # Pure parser: one saved page -> Entry models
+scraper/fetch_raw.py      # Phase 1: save Results.aspx pages to data/raw_html/ (local only, gitignored)
+scraper/parse_results.py  # Pure parser: one saved page -> Entry models; RAW_DIR, strip_state_fields
 scraper/parse_and_seed.py # Phase 2: parse all saved pages, upsert into the database
 scraper/fetch_calendar.py # Daily sync of vaegtloeftning.dk/kalender (events API) into vl.calendar_event
 db/migrations/            # Numbered SQL files: schema, roles, views. Never edit an applied one.

@@ -5,3 +5,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 data/
+
+# The vlstat.dk harvester stays local; it is not published (docs/decisions.md, 2026-10-31).
+scraper/fetch_raw.py
