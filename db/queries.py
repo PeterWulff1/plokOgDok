@@ -81,6 +81,17 @@ def search_lifters(query: str, limit: int = 8) -> list[Row]:
     )
 
 
+def search_index() -> list[Row]:
+    """Every lifter for the static site's in-browser search, most recently active first."""
+    return _all(
+        """
+        SELECT lifter_id, name, club, pr_total, last_date
+        FROM vl.mv_lifter_summary
+        ORDER BY last_date DESC, lifter_id
+        """
+    )
+
+
 def site_totals() -> Row:
     return _one(
         """

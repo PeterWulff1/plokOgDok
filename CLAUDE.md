@@ -50,6 +50,7 @@ docs/                     # plandokument.md, decisions.md
 - Sinclair fit: `uv run python -m scripts.fit_sinclair`
 - Calendar sync: `uv run python -m scraper.fetch_calendar [--dry-run]` (runs daily via the Windows task "PloekOgDoek kalender-sync")
 - Check every page of the site: `uv run python -m scripts.check_site` (run after UI or view changes)
+- Static site for GitHub Pages: `uv run python -m scripts.build_static --base plokOgDok` (writes `site/`); preview with `--serve 8040`. Published nightly by `.github/workflows/pages.yml`
 - Run website: `uv run uvicorn app.main:app --reload` (then http://127.0.0.1:8000)
 - Admin: http://127.0.0.1:8000/admin (password `ADMIN_PASSWORD` in `.env`)
 

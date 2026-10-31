@@ -2,15 +2,29 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
-## 2026-10-31 — The vlstat.dk harvester is kept out of git
+## 2026-10-31 — Published as static pages on GitHub Pages
 
-**Decision:** `scraper/fetch_raw.py`, the only code that contacts vlstat.dk, is gitignored and was removed from the git history before the first push to GitHub. It stays on the developer's machine. `RAW_DIR` and `strip_state_fields` moved to `scraper/parse_results.py`, so the parser, the seed, the Sinclair fit and the tests don't import it.
+**Decision:** The site is published on GitHub Pages (repository `PeterWulff1/plokOgDok`, now public) as static HTML. `scripts/build_static.py` renders every public page in-process with the read role and writes it to `site/` (`/loefter/7` -> `loefter/7.html`, links prefixed with the repository's sub-path). The workflow `.github/workflows/pages.yml` runs every night at 04:00 UTC: calendar sync (write role), full build (read role), deploy. A push to `main` rebuilds without syncing.
 
-**Reason:** The user doesn't want the vlstat scraper published, even in a private repository.
+**Reason:** The user wants to reach the site from anywhere with no server to run or secure. The data changes at most once a day, so static pages lose nothing.
 
 **Consequences:**
-- A fresh clone can parse and seed from saved pages, but can't harvest new ones. Keep a backup of `fetch_raw.py` outside git.
-- The harvester's behaviour and load rules stay documented in CLAUDE.md and this file.
+- No server, no login and no database connection on the public site. The database URLs live only in GitHub Actions secrets (`DATABASE_URL_READ`, `DATABASE_URL_WRITE`).
+- The admin page isn't published; it stays on the local app. After saving there, run the workflow by hand (Actions -> "Byg og udgiv siden" -> Run workflow) to update the site.
+- Front-page search runs in the browser against `sog.json` (`app/static/js/search.js`), mirroring `core.clubs.match_clubs` and `queries.search_lifters`. The local app keeps the htmx `/sog` endpoint; templates switch on the `static_site` global.
+- Every page has `noindex, nofollow`, so the site doesn't compete with vlstat.dk in search engines. It's still reachable by anyone with the address.
+- The build fails on any non-200 page or leaked template value (the `check_site` checks), so a broken site is never deployed.
+- The calendar now syncs from GitHub Actions; the Windows task "PloekOgDoek kalender-sync" can be removed once the workflow runs.
+- GitHub disables scheduled workflows after 60 days without commits; re-enable it under Actions if the nightly run stops.
+
+## 2026-10-31 — `scraper/fetch_raw.py` is local only
+
+**Decision:** `scraper/fetch_raw.py` is gitignored and not part of the repository's history. It stays on the developer's machine. `RAW_DIR` and `strip_state_fields` live in `scraper/parse_results.py`, so the parser, the seed, the Sinclair fit and the tests don't import it.
+
+**Reason:** The user's choice; the repository is public.
+
+**Consequences:**
+- A fresh clone can parse and seed from saved pages, but not fetch new ones. Keep a backup of `fetch_raw.py` outside git.
 
 ## 2026-10-31 — Calendar from vaegtloeftning.dk/kalender, synced daily (migration 016)
 

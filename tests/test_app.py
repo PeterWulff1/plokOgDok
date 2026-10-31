@@ -268,3 +268,15 @@ def test_static_urls_are_versioned(client):
     m = re.search(r'href="(/static/css/site\.css\?v=\d+)"', r.text)
     assert m, "stylesheet link should carry a version"
     assert client.get(m.group(1)).status_code == 200
+
+
+def test_pages_are_kept_out_of_search_engines(client):
+    assert '<meta name="robots" content="noindex, nofollow">' in client.get("/").text
+
+
+def test_static_build_swaps_server_search_for_browser_search(client, monkeypatch):
+    assert 'hx-get="/sog"' in client.get("/").text
+    monkeypatch.setitem(app_main.templates.env.globals, "static_site", True)
+    text = client.get("/").text
+    assert 'data-index="/sog.json"' in text and "js/search.js" in text
+    assert 'hx-get="/sog"' not in text

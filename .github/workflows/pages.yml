@@ -1,0 +1,61 @@
+# Builds Pløk og Døk as static pages and publishes them on GitHub Pages.
+# Every night it first syncs the calendar from vaegtloeftning.dk (one request), then
+# rebuilds every page from the database. Pushes to main rebuild without syncing.
+# Secrets (Settings -> Secrets and variables -> Actions): DATABASE_URL_READ, DATABASE_URL_WRITE.
+name: Byg og udgiv siden
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # 05:00/06:00 Danish time
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync --frozen
+
+      - name: Sync calendar
+        if: github.event_name != 'push'
+        # A calendar hiccup shouldn't stop the rest of the site from being rebuilt.
+        continue-on-error: true
+        run: uv run python -m scraper.fetch_calendar
+        env:
+          DATABASE_URL_WRITE: ${{ secrets.DATABASE_URL_WRITE }}
+
+      - name: Build site
+        run: uv run python -m scripts.build_static --base "/${{ github.event.repository.name }}"
+        env:
+          DATABASE_URL_READ: ${{ secrets.DATABASE_URL_READ }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

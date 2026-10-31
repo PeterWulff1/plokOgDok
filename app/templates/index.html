@@ -11,7 +11,7 @@
     <label for="q" class="visually-hidden">Søg efter løfter eller klub</label>
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
            placeholder="Søg efter løfter eller klub"
-           hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results">
+           {% if static_site %}data-index="/sog.json"{% else %}hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results"{% endif %}>
     <div id="search-results" class="search-results" aria-live="polite"></div>
   </form>
 
@@ -98,3 +98,5 @@
   </div>
 </section>
 {% endblock %}
+
+{% block scripts %}{% if static_site %}<script src="{{ static_url('js/search.js') }}" defer></script>{% endif %}{% endblock %}

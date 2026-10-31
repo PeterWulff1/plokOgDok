@@ -4,8 +4,30 @@
     {
       "name": "website",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "uvicorn", "app.main:app", "--reload", "--port", "8000"],
+      "runtimeArgs": [
+        "run",
+        "uvicorn",
+        "app.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
       "port": 8000
+    },
+    {
+      "name": "static-site",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "-m",
+        "scripts.build_static",
+        "--serve",
+        "8040",
+        "--base",
+        "/plokOgDok"
+      ],
+      "port": 8040
     }
   ]
 }

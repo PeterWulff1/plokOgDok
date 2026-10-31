@@ -63,6 +63,8 @@ def static_url(path: str) -> str:
 
 
 templates.env.globals["static_url"] = static_url
+# True only while scripts/build_static.py renders the site for GitHub Pages.
+templates.env.globals["static_site"] = False
 
 from app.admin import router as admin_router  # noqa: E402  (needs `templates` above)
 
