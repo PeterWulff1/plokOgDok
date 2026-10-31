@@ -1,6 +1,7 @@
 # Builds Pløk og Døk as static pages and publishes them on GitHub Pages.
 # Every night it first syncs the calendar from vaegtloeftning.dk (one request), then
-# rebuilds every page from the database. Pushes to main rebuild without syncing.
+# rebuilds every page from the database. Pushes to main rebuild (without syncing) only
+# when they change something the pages are made from.
 # Secrets (Settings -> Secrets and variables -> Actions): DATABASE_URL_READ, DATABASE_URL_WRITE.
 name: Byg og udgiv siden
 
@@ -10,20 +11,30 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - "app/**"
+      - "core/**"
+      - "db/queries.py"
+      - "db/migrations/**"
+      - "scripts/build_static.py"
+      - "scripts/check_site.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/pages.yml"
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
+    # A newer run makes an older build pointless, so cancel it.
+    concurrency:
+      group: pages-build
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +64,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # Never cancel a deployment halfway.
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

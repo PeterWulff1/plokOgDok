@@ -4,7 +4,7 @@ Newest first. Each entry: date, decision, reason, consequences.
 
 ## 2026-10-31 — Published as static pages on GitHub Pages
 
-**Decision:** The site is published on GitHub Pages (repository `PeterWulff1/plokOgDok`, now public) as static HTML. `scripts/build_static.py` renders every public page in-process with the read role and writes it to `site/` (`/loefter/7` -> `loefter/7.html`, links prefixed with the repository's sub-path). The workflow `.github/workflows/pages.yml` runs every night at 04:00 UTC: calendar sync (write role), full build (read role), deploy. A push to `main` rebuilds without syncing.
+**Decision:** The site is published on GitHub Pages (repository `PeterWulff1/plokOgDok`, now public) as static HTML. `scripts/build_static.py` renders every public page in-process with the read role and writes it to `site/` (`/loefter/7` -> `loefter/7.html`, links prefixed with the repository's sub-path). The workflow `.github/workflows/pages.yml` runs every night at 04:00 UTC: calendar sync (write role), full build (read role), deploy. A push to `main` rebuilds without syncing, but only when it touches what the pages are made from (`app/`, `core/`, `db/queries.py`, migrations, the build script, dependencies, the workflow); other pushes don't trigger a build. A newer run cancels an older build, never a deployment.
 
 **Reason:** The user wants to reach the site from anywhere with no server to run or secure. The data changes at most once a day, so static pages lose nothing.
 
@@ -14,6 +14,7 @@ Newest first. Each entry: date, decision, reason, consequences.
 - Front-page search runs in the browser against `sog.json` (`app/static/js/search.js`), mirroring `core.clubs.match_clubs` and `queries.search_lifters`. The local app keeps the htmx `/sog` endpoint; templates switch on the `static_site` global.
 - Every page has `noindex, nofollow`, so the site doesn't compete with vlstat.dk in search engines. It's still reachable by anyone with the address.
 - The build fails on any non-200 page or leaked template value (the `check_site` checks), so a broken site is never deployed.
+- Pages render 8 at a time (`--workers`), since each one mostly waits on database round trips. The first sequential run on GitHub took 1 h 22 min (runners in the US, database in Frankfurt); locally 490 pages went from 323 s to 62 s.
 - The calendar now syncs from GitHub Actions; the Windows task "PloekOgDoek kalender-sync" can be removed once the workflow runs.
 - GitHub disables scheduled workflows after 60 days without commits; re-enable it under Actions if the nightly run stops.
 

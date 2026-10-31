@@ -17,12 +17,14 @@ Row = dict[str, Any]
 _pool: ConnectionPool | None = None
 
 
-def open_pool(url: str | None = None) -> ConnectionPool:
+def open_pool(url: str | None = None, max_size: int = 4) -> ConnectionPool:
+    """Open the shared pool once; later calls return it. The static build asks for more
+    connections, since it renders several pages at a time."""
     global _pool
     if _pool is None:
         url = url or os.environ["DATABASE_URL_READ"]
         _pool = ConnectionPool(
-            url, min_size=1, max_size=4, kwargs={"row_factory": dict_row},
+            url, min_size=1, max_size=max_size, kwargs={"row_factory": dict_row},
             # Supabase's pooler drops idle connections; test each one before use and
             # recycle idle ones, so a site left running for days doesn't return 500s.
             check=ConnectionPool.check_connection, max_idle=300,

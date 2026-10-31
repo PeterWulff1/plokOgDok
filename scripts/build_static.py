@@ -18,6 +18,7 @@ import re
 import shutil
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -83,28 +84,38 @@ def page_urls(client_limit: int | None) -> list[str]:
     return urls
 
 
-def build(out: Path, base: str, lifter_limit: int | None = None) -> list[str]:
-    """Write the site to `out`. Returns the problems found (empty means publishable)."""
+def _render(client: TestClient, out: Path, base: str, url: str) -> list[str]:
+    """Fetch one page and write it. Returns its problems."""
+    r = client.get(url)
+    if r.status_code != 200:
+        return [f"{url}: HTTP {r.status_code}"]
+    text = visible_text(r.text)
+    target = page_file(out, url)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(with_base(r.text, base), encoding="utf-8")
+    return [f"{url}: {label} in page text" for p, label in LEAKS if p.search(text)]
+
+
+def build(out: Path, base: str, lifter_limit: int | None = None, workers: int = 8) -> list[str]:
+    """Write the site to `out`. Returns the problems found (empty means publishable).
+
+    Pages render `workers` at a time: each page waits mostly on database round trips,
+    which are slow from GitHub's runners to the database.
+    """
     if out.exists():
         shutil.rmtree(out)
     shutil.copytree(app_main.HERE / "static", out / "static")
     (out / ".nojekyll").touch()  # serve files as they are, no Jekyll processing
 
     app_main.templates.env.globals["static_site"] = True
+    queries.open_pool(max_size=workers)  # the app's lifespan reuses this pool
     problems: list[str] = []
     try:
-        with TestClient(app_main.app) as client:
+        with TestClient(app_main.app) as client, ThreadPoolExecutor(workers) as pool:
             urls = page_urls(lifter_limit)
-            for i, url in enumerate(urls, 1):
-                r = client.get(url)
-                if r.status_code != 200:
-                    problems.append(f"{url}: HTTP {r.status_code}")
-                    continue
-                text = visible_text(r.text)
-                problems += [f"{url}: {label} in page text" for p, label in LEAKS if p.search(text)]
-                target = page_file(out, url)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_text(with_base(r.text, base), encoding="utf-8")
+            jobs = [pool.submit(_render, client, out, base, url) for url in urls]
+            for i, job in enumerate(as_completed(jobs), 1):
+                problems += job.result()
                 if i % 200 == 0:
                     print(f"  {i}/{len(urls)} pages", flush=True)
             index = json.dumps(search_index(), ensure_ascii=False, separators=(",", ":"))
@@ -138,6 +149,7 @@ def main() -> None:
     parser.add_argument("--out", default="site", help="output folder (default: site)")
     parser.add_argument("--lifters", type=int, default=None, help="only the first N lifters")
     parser.add_argument("--serve", type=int, metavar="PORT", help="preview an existing build")
+    parser.add_argument("--workers", type=int, default=8, help="pages rendered at a time")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -149,7 +161,7 @@ def main() -> None:
         serve(Path(args.out), base, args.serve)
         return
     start = time.monotonic()
-    problems = build(Path(args.out), base, args.lifters)
+    problems = build(Path(args.out), base, args.lifters, args.workers)
     print(f"{len(problems)} problems in {time.monotonic() - start:.0f}s")
     for p in problems[:80]:
         print("  !", p)
