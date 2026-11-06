@@ -142,6 +142,40 @@ def test_age_group_boundaries(conn):
         assert conn.execute("SELECT vl.age_group(%s)", (age,)).fetchone()[0] == group
 
 
+def test_weight_class_2025_boundaries(conn):
+    cases = [("M", 60, "-60"), ("M", 60.01, "-65"), ("M", 110, "-110"), ("M", 110.01, "+110"),
+             ("F", 30, "-48"), ("F", 86, "-86"), ("F", 86.5, "+86"), ("F", None, None),
+             (None, 70, None)]  # fmt: skip
+    for gender, bw, expected in cases:
+        got = conn.execute("SELECT vl.weight_class_2025(%s, %s)", (gender, bw)).fetchone()[0]
+        assert got == expected, (gender, bw)
+
+
+def test_club_change_shows_until_next_competition(conn, raw_dir):
+    seed(conn, load_dataset(raw_dir))
+    lifter_id, club, last = conn.execute(
+        "SELECT lifter_id, club, last_date FROM vl.mv_lifter_summary ORDER BY lifter_id LIMIT 1"
+    ).fetchone()
+
+    def summary_club():
+        conn.execute("REFRESH MATERIALIZED VIEW vl.mv_lifter_summary")
+        return conn.execute(
+            "SELECT club FROM vl.v_lifter_data WHERE lifter_id = %s", (lifter_id,)
+        ).fetchone()[0]
+
+    conn.execute(
+        "INSERT INTO vl.lifter_club_change VALUES (%s, 'AK Ny', %s::date + 30)", (lifter_id, last)
+    )
+    assert summary_club() == "AK Ny"
+    # A competition after the change wins again (the change is older than it).
+    conn.execute("UPDATE vl.lifter_club_change SET since = %s::date - 1", (last,))
+    assert summary_club() == club
+    region = conn.execute(
+        "SELECT region FROM vl.club_region WHERE club = 'Bagsværd VK'"
+    ).fetchone()[0]
+    assert region == "Hovedstaden"
+
+
 def test_admin_lifter_search_and_match_by_id(conn, raw_dir, monkeypatch):
     from core.manual_entry import parse_rows
     from db import admin as store

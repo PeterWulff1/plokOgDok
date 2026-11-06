@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Pointberegner · Pløk og Døk{% endblock %}
+{% block description %}Regn Sinclair-point eller Q-point ud fra køn, kropsvægt og total.{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <p class="kicker">Sinclair og Q-point</p>
+  <h1>Pointberegner</h1>
+</section>
+
+<noscript><p class="notice">Beregneren kræver JavaScript.</p></noscript>
+
+<form class="calc" id="point-form" hidden>
+  <div class="calc-in">
+    <div class="filters">
+      <fieldset>
+        <legend>Pointsystem</legend>
+        <label><input type="radio" name="system" value="sinclair" checked><span>Sinclair</span></label>
+        <label><input type="radio" name="system" value="q"><span>Q-point</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Køn</legend>
+        <label><input type="radio" name="g" value="F" checked><span>Kvinde</span></label>
+        <label><input type="radio" name="g" value="M"><span>Mand</span></label>
+      </fieldset>
+    </div>
+
+    <label class="field big">
+      <span>Kropsvægt, kg</span>
+      <input type="number" name="bw" inputmode="decimal" min="20" max="250" step="0.01" placeholder="fx 80,45">
+    </label>
+    <label class="field big">
+      <span>Total, kg</span>
+      <input type="number" name="total" inputmode="decimal" min="0" step="1" placeholder="kg">
+    </label>
+    <div class="calc-split">
+      <span class="or">eller</span>
+      <label class="field"><span>Træk, kg</span><input type="number" name="sn" inputmode="decimal" min="0" step="1"></label>
+      <label class="field"><span>Stød, kg</span><input type="number" name="cj" inputmode="decimal" min="0" step="1"></label>
+    </div>
+    <div class="filters" id="point-period">
+      <fieldset>
+        <legend>Sinclair-koefficienter</legend>
+        {% for s in sinclair %}
+        <label><input type="radio" name="period" value="{{ loop.index0 }}"{% if loop.first %} checked{% endif %}><span>{{ s.from }}–{{ s.to }}</span></label>
+        {% endfor %}
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="plate brand calc-out" aria-live="polite">
+    <div class="kicker" id="pt-label">Sinclair-point</div>
+    <div class="value" id="pt-points">–</div>
+    <div class="note" id="pt-factor"></div>
+    <div class="note" id="pt-note"></div>
+  </div>
+</form>
+
+<section class="section">
+  <div class="section-head"><h2>Sådan regnes det</h2></div>
+  <div class="formula">
+    <div data-system="sinclair">
+      <p><b>Sinclair = total × 10<sup>A · (log<sub>10</sub>(kropsvægt / b))²</sup></b>, når kropsvægten er under b. Over b er faktoren 1.</p>
+      <p class="chart-note">Det er de samme koefficienter, som Pløk og Døk bruger til alle Sinclair-tal: IWF's sæt for 2017–2020 og 2021–2024 (også brugt i 2025) og fra 2026 et sæt udledt af de publicerede resultater.</p>
+    </div>
+    <div data-system="q" hidden>
+      <p><b>Q-point = total × faktor</b>, hvor faktoren afhænger af kropsvægten. Formlen er lavet af Huebner, Meltzer, Bjarnason og Perperoglou (2023) ud fra resultater fra OL, VM og kontinentale mesterskaber. Den bruges bl.a. til nordiske mesterskaber.</p>
+      <p class="chart-note">Mænd under 50 kg og kvinder under 41 kg regnes med 50 og 41 kg, efter Nordisk Vægtløftningsforbunds regel fra 2025. Q-point er ikke beregnet til ungdomsløftere. Kilde: <a href="https://osf.io/8x3nb/" rel="noopener">osf.io/8x3nb</a>.</p>
+    </div>
+    <p id="pt-coef" class="tab"></p>
+    <p class="chart-note">Point bør kun sammenlignes inden for samme køn.</p>
+  </div>
+</section>
+
+<script type="application/json" id="point-coefficients">{{ {"sinclair": sinclair, "qpoints": qpoints}|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}<script src="{{ static_url('js/points.js') }}" defer></script>{% endblock %}

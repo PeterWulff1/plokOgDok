@@ -28,8 +28,9 @@
       {% for copy in [1, 2] %}
       <ul{% if copy == 2 %} aria-hidden="true"{% endif %}>
         {% for logo in logos %}
-        <li><img src="/static/logos/{{ logo.file }}" width="{{ logo.w }}" height="{{ logo.h }}"
-                 alt="{{ logo.club if copy == 1 else '' }}" title="{{ logo.club }}" decoding="async"></li>
+        {% set img %}<img src="/static/logos/{{ logo.file }}" width="{{ logo.w }}" height="{{ logo.h }}"
+                 alt="{{ logo.club if copy == 1 else '' }}" title="{{ logo.club }}" decoding="async">{% endset %}
+        <li>{% if logo.slug %}<a href="/klub/{{ logo.slug }}"{% if copy == 2 %} tabindex="-1"{% endif %}>{{ img }}</a>{% else %}{{ img }}{% endif %}</li>
         {% endfor %}
       </ul>
       {% endfor %}

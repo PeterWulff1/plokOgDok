@@ -19,6 +19,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import formatting
 from core.clubs import club_slug, find_club, match_clubs
+from core.scoring import Q_POINTS
 from db import admin as admin_store
 from db import queries
 
@@ -83,7 +84,37 @@ def front_page(request: Request):
         competitions=queries.latest_competitions(12),
         upcoming=queries.upcoming_events(4, meets_only=True),
         totals=queries.site_totals(),
-        logos=random.sample(CLUB_LOGOS, len(CLUB_LOGOS)),
+        logos=_linked_logos(),
+    )
+
+
+def _linked_logos() -> list[dict]:
+    """Logos in random order, each with the slug of its club page when the club has one."""
+    clubs = {c["club"] for c in queries.all_clubs()}
+    logos = []
+    for logo in random.sample(CLUB_LOGOS, len(CLUB_LOGOS)):
+        name = logo.get("vlstat_club", logo["club"])
+        logos.append(dict(logo, slug=club_slug(name) if name in clubs else None))
+    return logos
+
+
+@app.get("/data", response_class=HTMLResponse)
+def data_page(request: Request):
+    return _render(
+        request,
+        "data.html",
+        lifters=formatting.lifter_data_rows(queries.lifter_data(), club_slug),
+        areas=formatting.AREAS,
+    )
+
+
+@app.get("/point", response_class=HTMLResponse)
+def points_page(request: Request):
+    return _render(
+        request,
+        "points.html",
+        sinclair=formatting.sinclair_sets(queries.sinclair_coefficients()),
+        qpoints=formatting.q_points_constants(Q_POINTS),
     )
 
 

@@ -156,6 +156,24 @@ COURSE = dict(EVENT, event_id=2, title="Trænerkursus trin 1", venue=None, city=
               kind="kursus", is_new=False, start_date=date(2027, 1, 15),
               end_date=date(2027, 1, 16))  # fmt: skip
 
+DATA_ROW = {
+    "lifter_id": 689, "name": "Peter Klinge Wulff", "gender": "M", "birth_year": 2001,
+    "club": "AK Gotha", "region": "Hovedstaden", "latest_bodyweight": Decimal("80.4"),
+    "weight_class": "-88", "pr_snatch": 100, "pr_cj": 125, "pr_total": 225,
+    "pr_sinclair": Decimal("281.37"), "competitions": 15, "last_date": date(2026, 9, 26),
+    "is_active": True, "age_group": "senior", "first_date": date(2019, 11, 17),
+    "is_new": False, "last_pr_date": date(2025, 2, 1), "has_recent_pr": False, "area": "Sjælland",
+}  # fmt: skip
+COEFFICIENTS = [
+    {"gender": g, "a": Decimal(a), "b": Decimal(b), "valid_from_year": y0, "valid_to_year": y1}
+    for g, a, b, y0, y1 in [
+        ("F", "0.674119984", "163.916", 2026, 2028),
+        ("M", "0.700752735", "201.161", 2026, 2028),
+        ("F", "0.787004341", "153.757", 2021, 2025),
+        ("M", "0.722762521", "193.609", 2021, 2025),
+    ]
+]
+
 
 @pytest.fixture
 def client(monkeypatch):
@@ -189,6 +207,8 @@ def client(monkeypatch):
         q, "calendar_months", lambda: [{"month": date(2027, 1, 1), "events": [EVENT, COURSE]}]
     )
     monkeypatch.setattr(q, "calendar_synced_at", lambda: datetime(2026, 10, 31, 6, tzinfo=UTC))
+    monkeypatch.setattr(q, "lifter_data", lambda: [DATA_ROW])
+    monkeypatch.setattr(q, "sinclair_coefficients", lambda: COEFFICIENTS)
     with TestClient(app_main.app) as c:
         yield c
 
@@ -280,3 +300,61 @@ def test_static_build_swaps_server_search_for_browser_search(client, monkeypatch
     text = client.get("/").text
     assert 'data-index="/sog.json"' in text and "js/search.js" in text
     assert 'hx-get="/sog"' not in text
+
+
+def test_front_page_logos_link_to_club_pages(client):
+    text = client.get("/").text
+    # Århus Atlet Klub has a page (logo mapped through vlstat_club); the loop copy is
+    # kept out of the tab order.
+    assert text.count('href="/klub/aarhus-atlet-klub"') == 2
+    assert text.count('href="/klub/aarhus-atlet-klub" tabindex="-1"') == 1
+    # Clubs without a page in the data get a plain logo.
+    assert 'href="/klub/ak-gotha"' not in text
+
+
+def test_footer_credits_both_sources(client):
+    text = client.get("/").text
+    assert "Data fra" in text and 'href="https://vaegtloeftning.dk"' in text
+    assert "regnet ud af os selv" not in text
+
+
+def test_lifter_data_rows_and_sinclair_sets():
+    from core.clubs import club_slug
+
+    (row,) = formatting.lifter_data_rows([DATA_ROW], club_slug)
+    assert row == {
+        "id": 689, "name": "Peter Klinge Wulff", "g": "M", "club": "AK Gotha",
+        "slug": "ak-gotha", "area": "Sjælland", "wc": "-88", "sn": 100, "cj": 125,
+        "tot": 225, "sin": 281.37, "age": "senior", "active": True, "form": False,
+        "lastPr": "2025-02-01", "lastPrText": "1. feb. 2025",
+    }  # fmt: skip
+    sets = formatting.sinclair_sets(COEFFICIENTS)
+    assert [(s["from"], s["to"]) for s in sets] == [(2026, 2028), (2021, 2025)]
+    assert sets[0]["M"] == {"a": 0.700752735, "b": 201.161}
+
+
+def test_data_page(client):
+    r = client.get("/data")
+    assert r.status_code == 200
+    text = r.text
+    assert '<script type="application/json" id="data-lifters">' in text
+    assert '"name": "Peter Klinge Wulff"' in text and '"slug": "ak-gotha"' in text
+    assert [
+        a
+        for a in ("Sjælland", "Fyn", "Jylland", "Hovedstaden", "Udland", "ukendt")
+        if f'name="region" value="{a}"' in text
+    ] == ["Sjælland", "Fyn", "Jylland"]
+    assert 'name="status" value="active"' in text and 'name="status" value="form"' not in text
+    assert 'name="status" value="new"' not in text and 'name="age" value="junior"' in text
+    assert "<select" not in text and "js/lifter-data.js" in text
+    assert 'href="/data"' in text  # in the main menu
+
+
+def test_points_page(client):
+    r = client.get("/point")
+    assert r.status_code == 200
+    text = r.text
+    assert "Pointberegner" in text and '"from": 2026' in text and ">2026–2028<" in text
+    assert '"qpoints": {"F": {' in text and '"scale": 463.26' in text
+    assert "js/points.js" in text and 'href="/point"' in text
+    assert "<select" not in text

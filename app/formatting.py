@@ -1,5 +1,6 @@
 """Danish display formatting for templates. Formats values; never computes statistics."""
 
+from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -90,6 +91,56 @@ def progression_series(history: list[dict]) -> dict:
         "pr_snatch": [bool(r["is_pr_snatch"]) and not r["is_debut"] for r in rows],
         "pr_cj": [bool(r["is_pr_cj"]) and not r["is_debut"] for r in rows],
     }
+
+
+def _float(v: Decimal | int | float | None) -> float | None:
+    return None if v is None else float(v)
+
+
+# Parts of the country on the data page (vl.v_lifter_data.area), east to west.
+AREAS = ["Sjælland", "Fyn", "Jylland"]
+
+
+def lifter_data_rows(rows: list[dict], club_slug) -> list[dict]:
+    """Rows from vl.v_lifter_data as compact JSON for the data page (static/js/lifter-data.js).
+    Only renames and formats fields; every number comes from the view."""
+    return [
+        {
+            "id": r["lifter_id"],
+            "name": r["name"],
+            "g": r["gender"],
+            "club": r["club"],
+            "slug": club_slug(r["club"]),
+            "area": r["area"],
+            "wc": r["weight_class"],
+            "sn": r["pr_snatch"],
+            "cj": r["pr_cj"],
+            "tot": r["pr_total"],
+            "sin": _float(r["pr_sinclair"]),
+            "age": r["age_group"],
+            "active": bool(r["is_active"]),
+            "form": bool(r["has_recent_pr"]),
+            "lastPr": r["last_pr_date"].isoformat() if r["last_pr_date"] else None,
+            "lastPrText": dk_date(r["last_pr_date"]) if r["last_pr_date"] else None,
+        }
+        for r in rows
+    ]
+
+
+def sinclair_sets(rows: list[dict]) -> list[dict]:
+    """Coefficient rows grouped per period for the calculator, newest first:
+    [{"from": 2026, "to": 2028, "F": {"a": .., "b": ..}, "M": {...}}]."""
+    sets: list[dict] = []
+    for r in rows:
+        if not sets or sets[-1]["from"] != r["valid_from_year"]:
+            sets.append({"from": r["valid_from_year"], "to": r["valid_to_year"]})
+        sets[-1][r["gender"]] = {"a": float(r["a"]), "b": float(r["b"])}
+    return sets
+
+
+def q_points_constants(q_points: dict) -> dict:
+    """core.scoring.Q_POINTS as JSON for the calculator: {"F": {"scale": ...}, "M": {...}}."""
+    return {str(gender): asdict(c) for gender, c in q_points.items()}
 
 
 FILTERS = {

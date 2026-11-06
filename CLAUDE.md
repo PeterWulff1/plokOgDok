@@ -78,6 +78,8 @@ All tables live in schema `vl` (not `public`, so Supabase's REST API doesn't exp
 - `entry`: `lifter_id`, `competition_id`, `bodyweight`, `weight_class` (NULL at gender-only meets like CWC), `club`, `reported_age` (raw age vlstat shows)
 - `attempt`: `entry_id`, `discipline` (`'snatch'` | `'cj'`), `attempt_number` (1–3), `weight_kg` (int), `is_successful` (bool)
 - `sinclair_coefficient`: `a`, `b`, `gender`, `valid_from_year`, `valid_to_year`
+- `club_region`: `club`, `region` (DVF region from vaegtloeftning.dk/find-klub, or `Udland`)
+- `lifter_club_change`: `lifter_id`, `club`, `since` (new club entered by hand; shown until the lifter's next competition)
 
 Rules:
 - **Attempts without a recorded weight get no row.** `weight_kg` is `NOT NULL`. The source doesn't say whether a blank attempt was passed or simply not recorded, so a missing row means "no data", never "missed". A lifter can have attempt 3 without attempt 2. Hit rate = made rows / existing rows. See `docs/decisions.md`.
@@ -133,6 +135,8 @@ The site's name is **Pløk og Døk**. Never brand it with "vlstat" or anything t
 - **Lifter profile** `/loefter/{lifter_id}` (our own ID; manual lifters have no vlstat_id): PRs (snatch, C&J, total, Sinclair), progression chart, hit rate per attempt number and discipline, snatch/C&J ratio over time, full competition history with attempt colors, and fun stats: favourite weight jump, weigh-in precision (avg kg below the class ceiling), hidden potential (PR snatch + PR C&J minus best total), longest streak of made lifts, most stable lifter.
 - **Competition page** `/staevne/{competition_id}`: results by weight class, competition hit rate, best Sinclair of the day, PRs set, club summary.
 - **Club page** `/klub/{slug}` (slug from `core/clubs.py`): headline numbers, record board, top Sinclair per gender, age profile, loyal lifters, roster with filters (status, gender, age) and column sorting done in the browser. Clubs also show in the search.
+- **Data page** `/data`: every lifter, filtered in the browser (gender, active, age group, IWF 2025 class, Sjælland/Fyn/Jylland, Sinclair slider) from `v_lifter_data`. Word-style filters, no dropdowns.
+- **Point calculator** `/point`: Sinclair or Q-points in the browser; formulas tested against `core/scoring.py` (`tests/test_points_js.py`).
 - **Admin page:** password login (`ADMIN_PASSWORD`), add competitions via form or CSV. Uses the write role only after login.
 - Not in v1: leaderboards.
 

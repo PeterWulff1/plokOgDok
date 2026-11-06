@@ -392,3 +392,22 @@ def calendar_months() -> list[Row]:
 def calendar_synced_at():
     """When the daily sync last saw the calendar, or None before the first sync."""
     return _one("SELECT max(last_seen_at) AS synced_at FROM vl.v_calendar_event")["synced_at"]
+
+
+# --- Data page and Sinclair calculator (migration 017) -------------------------------
+
+
+def lifter_data() -> list[Row]:
+    """Every lifter for the data page's filters: current club, region, class, all-time PRs."""
+    return _all("SELECT * FROM vl.v_lifter_data ORDER BY pr_sinclair DESC NULLS LAST, name")
+
+
+def sinclair_coefficients() -> list[Row]:
+    """Every coefficient set, newest first."""
+    return _all(
+        """
+        SELECT gender, a, b, valid_from_year, valid_to_year
+        FROM vl.sinclair_coefficient
+        ORDER BY valid_from_year DESC, gender
+        """
+    )

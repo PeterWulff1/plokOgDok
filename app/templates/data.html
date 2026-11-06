@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Data · Pløk og Døk{% endblock %}
+{% block description %}Alle {{ lifters|length }} løftere i dansk vægtløftning siden 2019. Filtrér på køn, form, alder, vægtklasse, region og Sinclair.{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <p class="kicker">Alle løftere · personlige rekorder</p>
+  <h1>Data</h1>
+</section>
+
+{# Every lifter is in the JSON below; static/js/lifter-data.js filters, sorts and draws the
+   table in the browser, so the page also works on the static site. #}
+<form class="data-filters" id="data-filters" hidden>
+  <div class="filters">
+    <fieldset>
+      <legend>Køn</legend>
+      <label><input type="radio" name="g" value="F" checked><span>Kvinder</span></label>
+      <label><input type="radio" name="g" value="M"><span>Mænd</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Løftere</legend>
+      {% for value, label, title in [
+        ("", "Alle", ""),
+        ("active", "Aktive", "Stævne inden for det seneste år"),
+        ("former", "Inaktive", "Intet stævne det seneste år"),
+      ] %}
+      <label{% if title %} title="{{ title }}"{% endif %}><input type="radio" name="status" value="{{ value }}"{% if not value %} checked{% endif %}><span>{{ label }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <fieldset>
+      <legend>Alder i år</legend>
+      {% for value, label, title in [
+        ("", "Alle", ""), ("ungdom", "Ungdom", "17 år eller yngre"), ("junior", "Junior", "18–20 år"),
+        ("senior", "Senior", "21–34 år"), ("master", "Master", "35 år eller ældre"),
+      ] %}
+      <label{% if title %} title="{{ title }}"{% endif %}><input type="radio" name="age" value="{{ value }}"{% if not value %} checked{% endif %}><span>{{ label }}</span></label>
+      {% endfor %}
+    </fieldset>
+  </div>
+
+  <div class="filters">
+    <fieldset id="class-filter">
+      <legend>Vægtklasse</legend>
+      <label><input type="radio" name="wc" value="" checked><span>Alle</span></label>
+      {# The classes for the chosen gender are added by lifter-data.js. #}
+    </fieldset>
+  </div>
+
+  <div class="filters">
+    <fieldset>
+      <legend>Landsdel <span class="hint">vælg en eller flere</span></legend>
+      {% for a in areas %}
+      <label><input type="checkbox" name="region" value="{{ a }}"><span>{{ a }}</span></label>
+      {% endfor %}
+    </fieldset>
+  </div>
+
+  <div class="slider" id="sinclair-filter">
+    <div class="slider-head">
+      <span class="slider-label">Sinclair</span>
+      <output id="sinclair-range" aria-live="polite"></output>
+    </div>
+    <div class="slider-track">
+      <input type="range" name="sin_min" step="5" aria-label="Sinclair fra">
+      <input type="range" name="sin_max" step="5" aria-label="Sinclair til">
+    </div>
+  </div>
+</form>
+
+<section class="section data-section">
+  <div class="section-head">
+    <h2 id="data-heading">Løftere</h2>
+    <span class="kicker"><output id="data-count" aria-live="polite">{{ lifters|length }} løftere</output> · <button type="button" class="link-button" id="data-reset">Nulstil</button></span>
+  </div>
+
+  <noscript><p class="notice">Filtrene kræver JavaScript.</p></noscript>
+
+  <div class="table-wrap">
+    <table id="data-table" class="sortable" aria-labelledby="data-heading">
+      <thead>
+        <tr>
+          <th data-key="name" data-sort="text"><button type="button">Løfter</button></th>
+          <th class="hide-sm" data-key="club" data-sort="text"><button type="button">Klub</button></th>
+          <th class="hide-sm" data-key="area" data-sort="text"><button type="button">Landsdel</button></th>
+          <th class="n hide-sm" data-key="wc" data-sort="class"><button type="button">Klasse</button></th>
+          <th class="n" data-key="sn" data-sort="num"><button type="button">Træk</button></th>
+          <th class="n" data-key="cj" data-sort="num"><button type="button">Stød</button></th>
+          <th class="n hide-sm" data-key="tot" data-sort="num"><button type="button">Total</button></th>
+          <th class="n" data-key="sin" data-sort="num" aria-sort="descending"><button type="button">Sinclair</button></th>
+          <th class="n hide-sm" data-key="lastPr" data-sort="num"><button type="button">Seneste PR</button></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="chart-note" id="data-empty" hidden>Ingen løftere passer til filtrene.</p>
+  <p class="more"><button type="button" class="btn ghost small" id="data-more" hidden>Vis flere</button></p>
+  <p class="chart-note">Træk, stød, total og Sinclair er personlige rekorder fra 2019 og frem. Aktiv = stævne inden for det seneste år. Klassen er IWF's vægtklasse fra 2025 ud fra seneste indvejning. Landsdel efter klubbens adresse hos <a href="https://vaegtloeftning.dk/find-klub/" rel="noopener">Dansk Vægtløftnings-Forbund</a>.</p>
+</section>
+
+<script type="application/json" id="data-lifters">{{ lifters|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}<script src="{{ static_url('js/lifter-data.js') }}" defer></script>{% endblock %}

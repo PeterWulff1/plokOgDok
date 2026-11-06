@@ -51,3 +51,39 @@ def sinclair_points(
     if lifted_total is None or bodyweight is None or coefficient is None:
         return None
     return lifted_total * sinclair_factor(bodyweight, coefficient)
+
+
+@dataclass(frozen=True)
+class QPointsCoefficient:
+    """Q-points (Huebner, Meltzer, Bjarnason, Perperoglou, Med Sci Sports Exerc 2023):
+    total * scale / (b0 + b1 * B**-2 + b2 * B**2) with B = bodyweight / 100.
+    min_bodyweight: lighter lifters are scored at this weight (Nordic Weightlifting
+    Federation congress, 15 Nov 2025), because the B**-2 term overrates light lifters."""
+
+    scale: float
+    b0: float
+    b1: float
+    b2: float
+    min_bodyweight: float
+
+
+# Fixed by the published model (osf.io/8x3nb, qpoints_Excelformula.txt), not per period
+# like Sinclair. Checked against vlstat's Q-points page: woman, 66.00 kg, 137 kg -> 182.61.
+Q_POINTS: dict[Gender, QPointsCoefficient] = {
+    Gender.MALE: QPointsCoefficient(463.26, 416.7, -47.87, 18.93, 50.0),
+    Gender.FEMALE: QPointsCoefficient(306.54, 266.5, -19.44, 18.61, 41.0),
+}
+
+
+def q_points_factor(bodyweight: float, coefficient: QPointsCoefficient) -> float:
+    c = coefficient
+    b = max(bodyweight, c.min_bodyweight) / 100
+    return c.scale / (c.b0 + c.b1 * b**-2 + c.b2 * b**2)
+
+
+def q_points(
+    lifted_total: int | None, bodyweight: float | None, gender: Gender | None
+) -> float | None:
+    if lifted_total is None or bodyweight is None or gender is None:
+        return None
+    return lifted_total * q_points_factor(bodyweight, Q_POINTS[gender])

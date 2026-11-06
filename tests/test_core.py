@@ -4,9 +4,12 @@ from pydantic import ValidationError
 from core.lifters import derive_birth_year, resolve_gender
 from core.models import Attempt, Discipline, Entry, Gender
 from core.scoring import (
+    Q_POINTS,
     SinclairCoefficient,
     best_lift,
     find_coefficient,
+    q_points,
+    q_points_factor,
     sinclair_points,
     total,
 )
@@ -61,6 +64,24 @@ def test_find_coefficient_by_year():
     assert find_coefficient(coeffs, Gender.MALE, 2021) is MEN_2021
     assert find_coefficient(coeffs, Gender.FEMALE, 2021) is None
     assert find_coefficient(coeffs, Gender.MALE, 2026) is None
+
+
+def test_q_points_matches_vlstat():
+    # vlstat's only Q-points page (2025): woman, 66.00 kg, total 137 -> 182.61.
+    assert q_points(137, 66.0, Gender.FEMALE) == pytest.approx(182.61, abs=0.005)
+
+
+def test_q_points_light_lifters_use_the_minimum_bodyweight():
+    men, women = Q_POINTS[Gender.MALE], Q_POINTS[Gender.FEMALE]
+    assert q_points_factor(45.0, men) == q_points_factor(50.0, men)
+    assert q_points_factor(38.5, women) == q_points_factor(41.0, women)
+    assert q_points_factor(50.5, men) != q_points_factor(50.0, men)
+
+
+def test_q_points_missing_input():
+    assert q_points(None, 80.0, Gender.MALE) is None
+    assert q_points(200, None, Gender.MALE) is None
+    assert q_points(200, 80.0, None) is None
 
 
 def test_entry_rejects_duplicate_attempt_slot():

@@ -366,6 +366,7 @@ td .sub { display: block; font-size: 13px; color: var(--ink-3); }
    no rule, at any width. */
 .filters { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px 0; margin: 0 0 18px -24px;
   clip-path: inset(-8px -8px -8px 3px); }
+.filters[hidden] { display: none; }
 .filters fieldset { border: 0; margin: 0; padding: 0 22px; border-left: 2px solid var(--ink); }
 .filters legend { float: left; width: 100%; padding: 0 0 2px; font: 700 13px var(--font-display);
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
@@ -506,4 +507,100 @@ table.calendar td:first-child { width: 11.5rem; }
   td .sub { font-size: 12px; }
   .show-sm { display: inline; }
   table.calendar td:first-child { width: 8.4rem; }
+}
+
+/* --- Front-page logo wheel: logos link to club pages --------------------------- */
+
+.logo-wheel a { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.logo-wheel a:hover img { transform: scale(1.06); }
+.logo-wheel img { transition: transform 0.15s; }
+/* Keeps moving under the mouse; pauses only while a keyboard user has a logo focused. */
+.logo-wheel:has(a:focus-visible) .logo-track { animation-play-state: paused; }
+
+/* --- Plain page head (data page, calculator) ------------------------------------ */
+
+.page-head { padding: 36px 0 20px; border-bottom: 3px solid var(--ink); margin-bottom: 24px; }
+.page-head h1 { font-size: clamp(48px, 10vw, 112px); color: var(--ink); }
+
+/* --- Labelled inputs: data page ranges and the Sinclair calculator ---------------- */
+
+.field { display: block; border: 0; margin: 0; padding: 0; min-width: 0; }
+.field > span, .field > legend {
+  display: block; padding: 0 0 4px; font: 700 13px var(--font-display);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
+}
+.field input {
+  font: 600 17px var(--font-body); color: var(--ink); background: #fff;
+  border: 2px solid var(--ink); border-radius: 0; padding: 7px 9px; min-width: 0;
+}
+.field input::placeholder { color: var(--ink-3); font-weight: 500; }
+.field input:focus-visible { outline: 3px solid var(--coral); outline-offset: 0; }
+.data-filters { border-bottom: 3px solid var(--ink); padding-bottom: 18px; }
+.data-filters .filters { margin-bottom: 14px; }
+.filters legend .hint { text-transform: none; letter-spacing: 0; font: 400 12px var(--font-body); color: var(--ink-3); margin-left: 4px; }
+.data-section { margin-top: 28px; }
+.link-button { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link-button:hover { color: var(--burgundy); }
+.link-button:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+
+/* Two-handled slider: two range inputs on one track. The bar between the handles is
+   burgundy (coral is kept for PRs); --lo and --hi are set by lifter-data.js. */
+.slider { max-width: 560px; }
+.slider-head { display: flex; align-items: baseline; gap: 12px; }
+.slider-label { font: 700 13px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.slider-head output { font: 800 21px/1 var(--font-display); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.slider-track { position: relative; height: 34px; --lo: 0%; --hi: 100%; }
+.slider-track::before, .slider-track::after { content: ""; position: absolute; top: 15px; height: 4px; }
+.slider-track::before { left: 0; right: 0; background: var(--ink); opacity: 0.25; }
+.slider-track::after { left: var(--lo); right: calc(100% - var(--hi)); background: var(--burgundy); height: 6px; top: 14px; }
+.slider input[type=range] {
+  position: absolute; inset: 0; width: 100%; height: 34px; margin: 0;
+  -webkit-appearance: none; appearance: none; background: none; pointer-events: none; z-index: 1;
+}
+.slider input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: grab;
+  width: 16px; height: 28px; background: var(--paper); border: 3px solid var(--ink); border-radius: 0;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.slider input[type=range]::-moz-range-thumb {
+  pointer-events: auto; cursor: grab; width: 10px; height: 22px;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 0; box-shadow: 2px 2px 0 var(--ink);
+}
+.slider input[type=range]::-moz-range-track { background: none; }
+.slider input[type=range]:focus-visible { outline: none; }
+.slider input[type=range]:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--coral); outline-offset: 1px; }
+.slider input[type=range]:focus-visible::-moz-range-thumb { outline: 3px solid var(--coral); outline-offset: 1px; }
+.more { margin: 16px 0 0; }
+.more:has(button[hidden]) { display: none; }
+td.faded { color: var(--ink-3); }
+.only-sm { display: none !important; }
+
+/* --- Sinclair calculator ---------------------------------------------------------- */
+
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 380px); gap: 32px; align-items: start; }
+.calc-in { display: grid; gap: 18px; }
+.calc-in .filters { margin-bottom: 0; }
+.field.big input { width: 100%; font: 800 34px/1.1 var(--font-display); padding: 8px 12px; }
+.calc-split { display: grid; grid-template-columns: auto 1fr 1fr; gap: 12px; align-items: end; }
+.calc-split .or { font: 700 13px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-3); padding-bottom: 12px; }
+.calc-split input { width: 100%; }
+.calc-out { position: sticky; top: 16px; padding: 18px 20px 16px; }
+.calc-out .value { font-size: clamp(56px, 9vw, 96px); overflow-wrap: anywhere; }
+.calc-out .note { margin-top: 6px; color: #F3E6D5; }
+.formula p { margin: 0 0 8px; max-width: 70ch; }
+.formula sup, .formula sub { font-size: 0.7em; }
+
+/* --- Small screens: new pages ----------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .calc { grid-template-columns: 1fr; }
+  .calc-out { position: static; }
+}
+@media (max-width: 720px) {
+  .masthead .wrap { flex-wrap: wrap; row-gap: 8px; }
+  .masthead nav { flex-wrap: wrap; gap: 4px 14px; }
+}
+@media (max-width: 560px) {
+  .only-sm { display: block !important; }
 }

@@ -77,7 +77,7 @@ def page_urls(client_limit: int | None) -> list[str]:
     lifters = queries._all("SELECT lifter_id FROM vl.mv_lifter_summary ORDER BY 1")
     if client_limit:
         lifters = lifters[:client_limit]
-    urls = ["/", "/kalender"]
+    urls = ["/", "/kalender", "/data", "/point"]
     urls += [f"/klub/{club_slug(c['club'])}" for c in queries.all_clubs() if club_slug(c["club"])]
     urls += [f"/staevne/{c['competition_id']}" for c in comps]
     urls += [f"/loefter/{row['lifter_id']}" for row in lifters]
