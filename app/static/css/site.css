@@ -588,14 +588,22 @@ td.faded { color: var(--ink-3); }
 .calc-out { position: sticky; top: 16px; padding: 18px 20px 16px; }
 .calc-out .value { font-size: clamp(56px, 9vw, 96px); overflow-wrap: anywhere; }
 .calc-out .note { margin-top: 6px; color: #F3E6D5; }
-.formula p { margin: 0 0 8px; max-width: 70ch; }
-.formula sup, .formula sub { font-size: 0.7em; }
+.dm-req { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+.dm-req > div { padding: 2px 22px; border-left: 2px solid var(--ink); }
+.dm-req > div:first-child { padding-left: 0; border-left: 0; }
+.dm-req dt { font: 700 13px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.dm-req dd { margin: 4px 0 0; font: 900 clamp(34px, 5vw, 56px)/1.05 var(--font-display); color: var(--burgundy); }
 
 /* --- Small screens: new pages ----------------------------------------------------- */
 
 @media (max-width: 860px) {
   .calc { grid-template-columns: 1fr; }
   .calc-out { position: static; }
+}
+@media (max-width: 560px) {
+  .dm-req { grid-template-columns: 1fr; }
+  .dm-req > div { padding: 10px 0; border-left: 0; border-top: 1px solid var(--rule-soft); }
+  .dm-req > div:first-child { border-top: 0; padding-top: 0; }
 }
 @media (max-width: 720px) {
   .masthead .wrap { flex-wrap: wrap; row-gap: 8px; }

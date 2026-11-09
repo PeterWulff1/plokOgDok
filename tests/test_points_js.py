@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from core.models import Gender
+from core.qualification import DM_SENIOR_CLASSES, dm_class, dm_missing_kg
 from core.scoring import Q_POINTS, SinclairCoefficient, q_points_factor, sinclair_factor
 
 NODE = shutil.which("node")
@@ -39,3 +40,19 @@ def test_js_q_points_factor_matches_core():
     js = _run_js(f"{json.dumps([[bw, c] for bw, c, _ in cases])}.map(x => m.qPointsFactor(...x))")
     for (bw, _, gender), got in zip(cases, js, strict=True):
         assert got == pytest.approx(q_points_factor(bw, Q_POINTS[gender]), rel=1e-12), (bw, gender)
+
+
+@pytest.mark.parametrize("gender", list(Gender))
+def test_js_dm_class_matches_core(gender):
+    classes = [asdict(c) for c in DM_SENIOR_CLASSES[gender]]
+    limits = [c["ceiling"] for c in classes if c["ceiling"] is not None]
+    weights = [*BODYWEIGHTS, *limits, *(limit + 0.01 for limit in limits)]
+    got = _run_js(f"{json.dumps(weights)}.map(bw => m.dmClass(bw, {json.dumps(classes)}).label)")
+    assert got == [dm_class(gender, bw).label for bw in weights]
+
+
+def test_js_dm_missing_matches_core():
+    cls = DM_SENIOR_CLASSES[Gender.MALE][3]
+    totals = [0, 189, 189.5, 190, 191]
+    got = _run_js(f"{json.dumps(totals)}.map(t => m.dmMissingKg({json.dumps(asdict(cls))}, t))")
+    assert got == [dm_missing_kg(cls, t) for t in totals]

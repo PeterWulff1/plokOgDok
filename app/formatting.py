@@ -5,6 +5,8 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
+from core.qualification import dm_class_label
+
 MONTHS = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.",
           "jul.", "aug.", "sep.", "okt.", "nov.", "dec."]  # fmt: skip
 MONTH_NAMES = ["januar", "februar", "marts", "april", "maj", "juni", "juli",
@@ -103,7 +105,8 @@ AREAS = ["Sjælland", "Fyn", "Jylland"]
 
 def lifter_data_rows(rows: list[dict], club_slug) -> list[dict]:
     """Rows from vl.v_lifter_data as compact JSON for the data page (static/js/lifter-data.js).
-    Only renames and formats fields; every number comes from the view."""
+    Only renames and formats fields; every number comes from the view, and the weight
+    class label from core.qualification."""
     return [
         {
             "id": r["lifter_id"],
@@ -112,7 +115,7 @@ def lifter_data_rows(rows: list[dict], club_slug) -> list[dict]:
             "club": r["club"],
             "slug": club_slug(r["club"]),
             "area": r["area"],
-            "wc": r["weight_class"],
+            "wc": dm_class_label(r["gender"], r["latest_bodyweight"]),
             "sn": r["pr_snatch"],
             "cj": r["pr_cj"],
             "tot": r["pr_total"],
@@ -141,6 +144,11 @@ def sinclair_sets(rows: list[dict]) -> list[dict]:
 def q_points_constants(q_points: dict) -> dict:
     """core.scoring.Q_POINTS as JSON for the calculator: {"F": {"scale": ...}, "M": {...}}."""
     return {str(gender): asdict(c) for gender, c in q_points.items()}
+
+
+def dm_classes(classes: dict) -> dict:
+    """core.qualification.DM_SENIOR_CLASSES as JSON: {"F": [{"label": "-49", ...}], "M": [...]}."""
+    return {str(gender): [asdict(c) for c in rows] for gender, rows in classes.items()}
 
 
 FILTERS = {

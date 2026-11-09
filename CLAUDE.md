@@ -135,7 +135,7 @@ The site's name is **Pløk og Døk**. Never brand it with "vlstat" or anything t
 - **Lifter profile** `/loefter/{lifter_id}` (our own ID; manual lifters have no vlstat_id): PRs (snatch, C&J, total, Sinclair), progression chart, hit rate per attempt number and discipline, snatch/C&J ratio over time, full competition history with attempt colors, and fun stats: favourite weight jump, weigh-in precision (avg kg below the class ceiling), hidden potential (PR snatch + PR C&J minus best total), longest streak of made lifts, most stable lifter.
 - **Competition page** `/staevne/{competition_id}`: results by weight class, competition hit rate, best Sinclair of the day, PRs set, club summary.
 - **Club page** `/klub/{slug}` (slug from `core/clubs.py`): headline numbers, record board, top Sinclair per gender, age profile, loyal lifters, roster with filters (status, gender, age) and column sorting done in the browser. Clubs also show in the search.
-- **Data page** `/data`: every lifter, filtered in the browser (gender, active, age group, IWF 2025 class, Sjælland/Fyn/Jylland, Sinclair slider) from `v_lifter_data`. Word-style filters, no dropdowns.
+- **Data page** `/data`: every lifter, filtered in the browser (gender, active, age group, DVF weight class, Sjælland/Fyn/Jylland, Sinclair slider) from `v_lifter_data`. Word-style filters, no dropdowns.
 - **Point calculator** `/point`: Sinclair or Q-points in the browser; formulas tested against `core/scoring.py` (`tests/test_points_js.py`).
 - **Admin page:** password login (`ADMIN_PASSWORD`), add competitions via form or CSV. Uses the write role only after login.
 - Not in v1: leaderboards.

@@ -57,23 +57,17 @@
   </div>
 </form>
 
-<section class="section">
-  <div class="section-head"><h2>Sådan regnes det</h2></div>
-  <div class="formula">
-    <div data-system="sinclair">
-      <p><b>Sinclair = total × 10<sup>A · (log<sub>10</sub>(kropsvægt / b))²</sup></b>, når kropsvægten er under b. Over b er faktoren 1.</p>
-      <p class="chart-note">Det er de samme koefficienter, som Pløk og Døk bruger til alle Sinclair-tal: IWF's sæt for 2017–2020 og 2021–2024 (også brugt i 2025) og fra 2026 et sæt udledt af de publicerede resultater.</p>
-    </div>
-    <div data-system="q" hidden>
-      <p><b>Q-point = total × faktor</b>, hvor faktoren afhænger af kropsvægten. Formlen er lavet af Huebner, Meltzer, Bjarnason og Perperoglou (2023) ud fra resultater fra OL, VM og kontinentale mesterskaber. Den bruges bl.a. til nordiske mesterskaber.</p>
-      <p class="chart-note">Mænd under 50 kg og kvinder under 41 kg regnes med 50 og 41 kg, efter Nordisk Vægtløftningsforbunds regel fra 2025. Q-point er ikke beregnet til ungdomsløftere. Kilde: <a href="https://osf.io/8x3nb/" rel="noopener">osf.io/8x3nb</a>.</p>
-    </div>
-    <p id="pt-coef" class="tab"></p>
-    <p class="chart-note">Point bør kun sammenlignes inden for samme køn.</p>
-  </div>
+<section class="section" id="dm-section" hidden>
+  <div class="section-head"><h2>DM-krav</h2></div>
+  <dl class="dm-req" aria-live="polite">
+    <div><dt>Vægtklasse</dt><dd id="dm-class">–</dd></div>
+    <div><dt>DM-krav, total</dt><dd id="dm-total">–</dd></div>
+    <div><dt>Din total</dt><dd id="dm-gap">–</dd></div>
+  </dl>
+  <p class="chart-note">DM Senior. Klasser og krav fra <a href="https://vaegtloeftning.dk/kvalifikation-og-tilmelding/" rel="noopener">Dansk Vægtløftnings-Forbund</a>.</p>
 </section>
 
-<script type="application/json" id="point-coefficients">{{ {"sinclair": sinclair, "qpoints": qpoints}|tojson }}</script>
+<script type="application/json" id="point-coefficients">{{ {"sinclair": sinclair, "qpoints": qpoints, "dm": dm}|tojson }}</script>
 {% endblock %}
 
 {% block scripts %}<script src="{{ static_url('js/points.js') }}" defer></script>{% endblock %}

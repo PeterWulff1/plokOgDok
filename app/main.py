@@ -19,6 +19,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import formatting
 from core.clubs import club_slug, find_club, match_clubs
+from core.qualification import DM_SENIOR_CLASSES
 from core.scoring import Q_POINTS
 from db import admin as admin_store
 from db import queries
@@ -115,6 +116,7 @@ def points_page(request: Request):
         "points.html",
         sinclair=formatting.sinclair_sets(queries.sinclair_coefficients()),
         qpoints=formatting.q_points_constants(Q_POINTS),
+        dm=formatting.dm_classes(DM_SENIOR_CLASSES),
     )
 
 

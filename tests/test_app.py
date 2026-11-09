@@ -324,7 +324,7 @@ def test_lifter_data_rows_and_sinclair_sets():
     (row,) = formatting.lifter_data_rows([DATA_ROW], club_slug)
     assert row == {
         "id": 689, "name": "Peter Klinge Wulff", "g": "M", "club": "AK Gotha",
-        "slug": "ak-gotha", "area": "Sjælland", "wc": "-88", "sn": 100, "cj": 125,
+        "slug": "ak-gotha", "area": "Sjælland", "wc": "-85", "sn": 100, "cj": 125,
         "tot": 225, "sin": 281.37, "age": "senior", "active": True, "form": False,
         "lastPr": "2025-02-01", "lastPrText": "1. feb. 2025",
     }  # fmt: skip
@@ -358,3 +358,5 @@ def test_points_page(client):
     assert '"qpoints": {"F": {' in text and '"scale": 463.26' in text
     assert "js/points.js" in text and 'href="/point"' in text
     assert "<select" not in text
+    assert "Sådan regnes det" not in text
+    assert ">DM-krav<" in text and '"qualifying_total": 190' in text
