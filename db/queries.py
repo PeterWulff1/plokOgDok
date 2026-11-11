@@ -12,6 +12,8 @@ from typing import Any
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
+from core.weight_classes import weight_class_sort_key
+
 Row = dict[str, Any]
 
 _pool: ConnectionPool | None = None
@@ -219,6 +221,14 @@ def competition_results(competition_id: int) -> list[Row]:
         if not groups or (groups[-1]["gender"], groups[-1]["weight_class"]) != key:
             groups.append({"gender": key[0], "weight_class": key[1], "entries": []})
         groups[-1]["entries"].append(r)
+    # SQL sorts classes as text ("-110kg" before "-70kg"); order them by weight instead.
+    groups.sort(
+        key=lambda g: (
+            g["gender"] is None,
+            g["gender"] or "",
+            weight_class_sort_key(g["weight_class"]),
+        )
+    )
     return groups
 
 

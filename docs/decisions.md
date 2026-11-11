@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-11-11 — Competition pages order weight classes by weight
+
+**Decision:** `db.queries.competition_results` orders the class groups with `core.weight_classes.weight_class_sort_key`: per gender, entries without a class first, then per prefix group (none first, then "35-39år", "Junior" and so on) from lightest to heaviest, each "+" class right after the class with the same number, and labels without a kg number ("udenfor konkurrence") last. Ranges like "71 - 81kg" sort by their upper limit.
+
+**Reason:** SQL sorted vlstat's class text, so "-110kg" came before "-70kg" (seen at Øst senior 2026). The 277 labels in the data mix plain, masters, ranged and odd forms, so the order lives in `core`, where it is tested without a database.
+
 ## 2026-11-06 — Data page, point calculator, club regions and club changes (migrations 017–019)
 
 **Decision:**
