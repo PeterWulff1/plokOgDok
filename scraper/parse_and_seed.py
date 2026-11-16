@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 
 from core.lifters import derive_birth_year, resolve_gender
 from core.models import Competition, Entry, Gender, Lifter
+from db.connect import with_tls
 from scraper.parse_results import (
     RAW_DIR,
     PageFormatError,
@@ -186,7 +187,7 @@ def main() -> None:
     url = os.environ.get("DATABASE_URL_WRITE")
     if not url:
         sys.exit("DATABASE_URL_WRITE is not set (see .env.example)")
-    with psycopg.connect(url, autocommit=True) as conn:
+    with psycopg.connect(with_tls(url), autocommit=True) as conn:
         seed(conn, data)
     print("Seed complete.")
 

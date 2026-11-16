@@ -123,6 +123,9 @@ When you delegate to subagents:
 - Keep secrets out of code. Database URLs (`DATABASE_URL_ADMIN`, `DATABASE_URL_WRITE`, `DATABASE_URL_READ`) and `ADMIN_PASSWORD` go in `.env`, which is in `.gitignore`. Never read `.env` or print its values; use `db.check` to test connections. Keep `.env.example` current with dummy values.
 - The public Streamlit app connects with the **read-only** role. The write role is used only by the seed script and by the admin page after login.
 - Use parameterized SQL only. Never build queries with f-strings.
+- Connect through `db.connect.with_tls(url)`, which requires TLS for any database that isn't local.
+- The GitHub workflow only gets `DATABASE_URL_READ` and `DATABASE_URL_CALENDAR` (a role that can only write the calendar). Never give it the write or admin URL. Keep its actions pinned to commit hashes.
+- No inline scripts or `on...=` attributes in templates, and no scripts from CDNs: the Content-Security-Policy in `app/main.py` blocks them. Put code in `app/static/js/` and libraries in `app/static/vendor/`.
 
 ## Website: Pløk og Døk
 

@@ -7,13 +7,14 @@
   <p class="kicker">Dansk vægtløftning · siden {{ totals.since.year }}</p>
   <h1>Find en løfter</h1>
 
-  <form class="search" action="/sog" role="search" onsubmit="return false">
+  {# Not a <form>: results appear as you type, and Enter must not submit anything. #}
+  <div class="search" role="search">
     <label for="q" class="visually-hidden">Søg efter løfter eller klub</label>
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
            placeholder="Søg efter løfter eller klub"
            {% if static_site %}data-index="/sog.json"{% else %}hx-get="/sog" hx-trigger="input changed delay:200ms, search" hx-target="#search-results"{% endif %}>
     <div id="search-results" class="search-results" aria-live="polite"></div>
-  </form>
+  </div>
 
   <div class="tally num">
     <span><b>{{ totals.lifters|num }}</b> løftere</span>

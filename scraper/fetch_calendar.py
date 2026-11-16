@@ -9,7 +9,10 @@ day's run tries again. Upcoming events that vanish from the source are deleted (
 
 Usage:
     python -m scraper.fetch_calendar --dry-run    # fetch and print, no database needed
-    python -m scraper.fetch_calendar              # upsert into DATABASE_URL_WRITE
+    python -m scraper.fetch_calendar              # upsert into the database
+
+Connects with DATABASE_URL_CALENDAR when it is set (a role that can only write the calendar,
+migration 020; this is what the GitHub workflow has), otherwise with DATABASE_URL_WRITE.
 """
 
 import argparse
@@ -29,6 +32,7 @@ from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from core.models import CalendarEvent
+from db.connect import with_tls
 
 API_URL = "https://vaegtloeftning.dk/wp-json/tribe/events/v1/events"
 ALLOWED_HOST = "vaegtloeftning.dk"
@@ -37,6 +41,7 @@ DELAY_SECONDS = 3.0
 TIMEOUT_SECONDS = 30
 PER_PAGE = 50
 MAX_PAGES = 10  # ~500 upcoming events; far more than the calendar ever holds.
+MAX_BYTES = 20_000_000  # per response; a page of 50 events is well under 1 MB
 
 
 class SyncError(RuntimeError):
@@ -53,20 +58,38 @@ class SyncReport:
 # --- Fetching -----------------------------------------------------------------------
 
 
+def _check_url(url: str) -> None:
+    parts = urlparse(url)
+    if parts.scheme != "https" or parts.hostname != ALLOWED_HOST:
+        raise SyncError(f"Refusing to follow {url}: not https://{ALLOWED_HOST}")
+
+
+class _SameHostRedirects(urllib.request.HTTPRedirectHandler):
+    """urllib follows redirects anywhere by default; only follow them within the source."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _check_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_opener = urllib.request.build_opener(_SameHostRedirects)
+
+
 def _get_json(url: str) -> dict:
-    if urlparse(url).hostname != ALLOWED_HOST:
-        raise SyncError(f"Refusing to follow {url}: not {ALLOWED_HOST}")
+    _check_url(url)
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
     )
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        with _opener.open(request, timeout=TIMEOUT_SECONDS) as response:
             content_type = response.headers.get("Content-Type", "")
-            body = response.read()
+            body = response.read(MAX_BYTES + 1)
     except urllib.error.HTTPError as exc:
         raise SyncError(f"HTTP {exc.code} for {url}. Stopping.") from exc
     except (urllib.error.URLError, TimeoutError) as exc:
         raise SyncError(f"No answer from {url}: {exc}. Stopping.") from exc
+    if len(body) > MAX_BYTES:
+        raise SyncError(f"Response from {url} is larger than {MAX_BYTES} bytes. Stopping.")
     if "json" not in content_type:
         raise SyncError(f"Expected JSON from {url}, got {content_type!r}. Stopping.")
     try:
@@ -230,11 +253,11 @@ def main() -> None:
         return
 
     load_dotenv()
-    url = os.environ.get("DATABASE_URL_WRITE")
+    url = os.environ.get("DATABASE_URL_CALENDAR") or os.environ.get("DATABASE_URL_WRITE")
     if not url:
-        sys.exit("DATABASE_URL_WRITE is not set (see .env.example)")
+        sys.exit("DATABASE_URL_CALENDAR or DATABASE_URL_WRITE is not set (see .env.example)")
     seen_ids = {r["id"] for r in raw_events if is_listed(r) and isinstance(r.get("id"), int)}
-    with psycopg.connect(url, autocommit=True) as conn:
+    with psycopg.connect(with_tls(url), autocommit=True) as conn:
         _print_report(store(conn, events, seen_ids, today))
 
 

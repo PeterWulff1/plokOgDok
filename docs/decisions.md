@@ -2,6 +2,28 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-11-16 — Security hardening after a review (migration 020)
+
+**Decision:**
+- **Calendar role.** The nightly workflow connects as a role that can only write `vl.calendar_event` (`vl_calendar`, migration 020; secret `DATABASE_URL_CALENDAR`). `scraper/fetch_calendar.py` uses it when set and falls back to `DATABASE_URL_WRITE` locally. The full write role is no longer a GitHub secret.
+- **Workflow.** Actions are pinned to commit hashes (a tag can be moved to other code), permissions are per job, and the checkout doesn't keep its token.
+- **No third-party scripts.** htmx 2.0.4 and Plotly basic 2.35.2 are served from `app/static/vendor/`, not from unpkg and jsdelivr. Both files were fetched from two CDNs and matched byte for byte; htmx also matches the hash its documentation publishes.
+- **Content-Security-Policy.** Scripts only from our own origin, no inline scripts or handlers (`CONTENT_SECURITY_POLICY` in `app/main.py`). The local app sends it as a header, together with `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy`; the static site carries it in a `<meta>` tag, since GitHub Pages can't send headers. Admin pages are `Cache-Control: no-store`.
+- **Host check.** The app only answers to `127.0.0.1` and `localhost` (`ALLOWED_HOSTS` to change it), which stops another website from reaching the local app through DNS rebinding.
+- **TLS.** `db/connect.py` adds `sslmode=require` to every connection that isn't local and doesn't set `sslmode` itself.
+- **Smaller things.** The database test refuses a `TEST_DATABASE_URL` that isn't on this machine (it drops schema `vl`). The calendar sync only follows redirects within `https://vaegtloeftning.dk` and caps the response size. The public search treats `%` and `_` as text and caps the query at 60 characters, like the admin search.
+
+**Reason:** A security review found no way to inject SQL or script, but two real exposures: the workflow held a role that could rewrite every table, and every page ran scripts from CDNs with no integrity check. The rest are cheap protections for the local app and for the day it might be hosted.
+
+**Consequences:**
+- New inline `<script>` blocks or `onclick`-style attributes won't run. Put code in `app/static/js/`. JSON data blocks (`<script type="application/json">`) are fine.
+- A new external script, font or image host must be added to `CONTENT_SECURITY_POLICY`. Styles may still be inline.
+- Upgrading htmx or Plotly means replacing the file in `app/static/vendor/` and the name in the template.
+- Updating an action means changing its hash and the version comment in `pages.yml`.
+- The front-page search box is a `<div role="search">`, not a `<form>`, so Enter can't submit it without an inline handler.
+- Not changed, since they only matter if the app is hosted: the login lockout is per IP and in memory, sessions can't be revoked before they expire (8 hours), and the login cookie is only marked `Secure` with `HTTPS_ONLY=1`.
+- `DATABASE_URL_ADMIN` stays in `.env` (the user's choice).
+
 ## 2026-11-11 — Competition pages order weight classes by weight
 
 **Decision:** `db.queries.competition_results` orders the class groups with `core.weight_classes.weight_class_sort_key`: per gender, entries without a class first, then per prefix group (none first, then "35-39år", "Junior" and so on) from lightest to heaviest, each "+" class right after the class with the same number, and labels without a kg number ("udenfor konkurrence") last. Ranges like "71 - 81kg" sort by their upper limit.

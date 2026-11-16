@@ -6,6 +6,7 @@ read-only role (DATABASE_URL_READ).
 """
 
 import os
+import re
 from collections import defaultdict
 from typing import Any
 
@@ -13,6 +14,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from core.weight_classes import weight_class_sort_key
+from db.connect import with_tls
 
 Row = dict[str, Any]
 
@@ -26,7 +28,7 @@ def open_pool(url: str | None = None, max_size: int = 4) -> ConnectionPool:
     if _pool is None:
         url = url or os.environ["DATABASE_URL_READ"]
         _pool = ConnectionPool(
-            url, min_size=1, max_size=max_size, kwargs={"row_factory": dict_row},
+            with_tls(url), min_size=1, max_size=max_size, kwargs={"row_factory": dict_row},
             # Supabase's pooler drops idle connections; test each one before use and
             # recycle idle ones, so a site left running for days doesn't return 500s.
             check=ConnectionPool.check_connection, max_idle=300,
@@ -70,9 +72,10 @@ def latest_competitions(limit: int = 12) -> list[Row]:
 
 
 def search_lifters(query: str, limit: int = 8) -> list[Row]:
-    query = query.strip()
+    query = query.strip()[:60]
     if len(query) < 2:
         return []
+    literal = re.sub(r"([\\%_])", r"\\\1", query)  # match the text, not as wildcards
     return _all(
         """
         SELECT lifter_id, name, club, gender, pr_total, pr_sinclair, last_date
@@ -81,7 +84,7 @@ def search_lifters(query: str, limit: int = 8) -> list[Row]:
         ORDER BY (name ILIKE %s) DESC, last_date DESC
         LIMIT %s
         """,
-        (f"%{query}%", f"{query}%", limit),
+        (f"%{literal}%", f"{literal}%", limit),
     )
 
 

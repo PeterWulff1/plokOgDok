@@ -15,6 +15,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from core.manual_entry import ManualRow
+from db.connect import with_tls
 
 _pool: ConnectionPool | None = None
 
@@ -23,7 +24,7 @@ def _conn():
     global _pool
     if _pool is None:
         _pool = ConnectionPool(
-            os.environ["DATABASE_URL_WRITE"], min_size=0, max_size=2,
+            with_tls(os.environ["DATABASE_URL_WRITE"]), min_size=0, max_size=2,
             kwargs={"row_factory": dict_row, "autocommit": True},
             check=ConnectionPool.check_connection, max_idle=300,  # see db/queries.py
         )  # fmt: skip

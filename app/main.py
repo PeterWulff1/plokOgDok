@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app import formatting
 from core.clubs import club_slug, find_club, match_clubs
@@ -42,6 +43,48 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
+
+# What a page may load: our own files, plus Google Fonts. No inline or third-party scripts.
+# Inline styles stay allowed: templates set chart widths with style="", and Plotly adds its own.
+CONTENT_SECURITY_POLICY = "; ".join(
+    [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src https://fonts.gstatic.com",
+        "img-src 'self' data: blob:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ]
+)
+SECURITY_HEADERS = {
+    # frame-ancestors only works as a header, so it isn't in the <meta> the static site uses.
+    "Content-Security-Policy": CONTENT_SECURITY_POLICY + "; frame-ancestors 'none'",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin",
+}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    if request.url.path.startswith("/admin"):
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
+
+
+# Hosts the app answers to. Another site can point its own domain at 127.0.0.1 (DNS
+# rebinding) and reach a locally running app through the visitor's browser; refusing unknown
+# Host headers stops that. Set ALLOWED_HOSTS (comma-separated) if the app is ever hosted.
+# "testserver" is the in-process test client (tests, check_site, build_static).
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h
+] + ["testserver"]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 app.add_middleware(
     SessionMiddleware,
     # Without SESSION_SECRET, logins just don't survive a restart.
@@ -67,6 +110,7 @@ def static_url(path: str) -> str:
 templates.env.globals["static_url"] = static_url
 # True only while scripts/build_static.py renders the site for GitHub Pages.
 templates.env.globals["static_site"] = False
+templates.env.globals["csp"] = CONTENT_SECURITY_POLICY
 
 from app.admin import router as admin_router  # noqa: E402  (needs `templates` above)
 

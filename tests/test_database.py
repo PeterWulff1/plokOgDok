@@ -1,7 +1,8 @@
 """Integration test against a real, empty, throwaway Postgres database.
 
 Skipped unless TEST_DATABASE_URL is set. Never point it at the Supabase project:
-the test creates and drops the `vl` schema. Example with Docker:
+the test creates and drops the `vl` schema, so it refuses any database that isn't on this
+machine. Example with Docker:
     docker run -d --name vl-test -e POSTGRES_PASSWORD=test -p 54329:5432 postgres:17
     TEST_DATABASE_URL=postgresql://postgres:test@localhost:54329/postgres pytest
 """
@@ -11,10 +12,16 @@ from pathlib import Path
 
 import pytest
 
+from db.connect import is_local
 from scraper.parse_and_seed import load_dataset, seed
 
 URL = os.environ.get("TEST_DATABASE_URL")
 pytestmark = pytest.mark.skipif(not URL, reason="TEST_DATABASE_URL not set")
+if URL and not is_local(URL):
+    pytest.exit(
+        "TEST_DATABASE_URL must be a database on this machine: the tests drop schema vl.",
+        returncode=1,
+    )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "results_sample.html"
 
@@ -232,3 +239,34 @@ def test_calendar_sync_adds_changes_and_removes(conn):
         "SELECT source_id, kind, is_abroad, is_new FROM vl.v_calendar_event ORDER BY 1"
     ).fetchall()
     assert kinds == [(1, "staevne", False, False), (2, "kursus", False, False)]
+
+
+def test_calendar_role_can_only_write_the_calendar(conn):
+    """Migration 020: what the nightly workflow connects as."""
+    import psycopg
+
+    conn.execute("SET ROLE vl_calendar")
+    try:
+        conn.execute(
+            """
+            INSERT INTO vl.calendar_event
+                (source_id, title, starts_at, ends_at, all_day, url, source_modified)
+            VALUES (99, 'Testcup', '2027-01-01', '2027-01-01', true,
+                    'https://vaegtloeftning.dk/x', now())
+            """
+        )
+        conn.execute("UPDATE vl.calendar_event SET title = 'Testcup 2' WHERE source_id = 99")
+        deleted = conn.execute(
+            "DELETE FROM vl.calendar_event WHERE source_id = 99 RETURNING title"
+        ).fetchall()
+        assert deleted == [("Testcup 2",)]
+        for forbidden in (
+            "SELECT count(*) FROM vl.lifter",
+            "DELETE FROM vl.attempt",
+            "INSERT INTO vl.competition (name, date) VALUES ('x', '2027-01-01')",
+            "SELECT vl.refresh_derived()",
+        ):
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                conn.execute(forbidden)
+    finally:
+        conn.execute("RESET ROLE")

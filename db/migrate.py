@@ -13,6 +13,8 @@ from pathlib import Path
 import psycopg
 from dotenv import load_dotenv
 
+from db.connect import with_tls
+
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
@@ -45,7 +47,7 @@ def main() -> None:
     url = os.environ.get("DATABASE_URL_ADMIN")
     if not url:
         sys.exit("DATABASE_URL_ADMIN is not set (see .env.example)")
-    with psycopg.connect(url, autocommit=True) as conn:
+    with psycopg.connect(with_tls(url), autocommit=True) as conn:
         applied = apply_migrations(conn)
     print("Applied:", ", ".join(applied) if applied else "nothing, already up to date")
 

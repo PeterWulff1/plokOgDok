@@ -360,3 +360,45 @@ def test_points_page(client):
     assert "<select" not in text
     assert "Sådan regnes det" not in text
     assert ">DM-krav<" in text and '"qualifying_total": 190' in text
+
+
+INLINE_HANDLER = re.compile(r'\son[a-z]+="')
+
+
+def test_security_headers_and_only_our_own_scripts(client):
+    r = client.get("/")
+    csp = r.headers["content-security-policy"]
+    assert "script-src 'self';" in csp and "frame-ancestors 'none'" in csp
+    assert "unsafe-eval" not in csp
+    assert r.headers["x-frame-options"] == "DENY"
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["referrer-policy"] == "same-origin"
+    # Every script comes from our own static folder, and nothing runs inline.
+    for page in ("/", "/data", "/point", "/kalender", "/klub/aarhus-atlet-klub"):
+        html = client.get(page).text
+        sources = re.findall(r'<script[^>]*\ssrc="([^"]+)"', html)
+        assert sources and all(src.startswith("/static/") for src in sources), page
+        assert not INLINE_HANDLER.search(html), page
+        assert "http-equiv" not in html  # the local app sends the policy as a header
+
+
+def test_static_site_carries_the_policy_in_a_meta_tag(client, monkeypatch):
+    monkeypatch.setitem(app_main.templates.env.globals, "static_site", True)
+    html = client.get("/kalender").text
+    assert '<meta http-equiv="Content-Security-Policy" content="default-src' in html
+    assert "frame-ancestors" not in html  # browsers ignore it in a meta tag
+
+
+def test_public_search_matches_wildcards_as_text_and_caps_length(monkeypatch):
+    seen = []
+    monkeypatch.setattr(app_main.queries, "_all", lambda sql, params=(): seen.append(params) or [])
+    app_main.queries.search_lifters("50%_a")
+    assert seen[0][:2] == (r"%50\%\_a%", r"50\%\_a%")
+    app_main.queries.search_lifters("x" * 500)
+    assert seen[1][1] == "x" * 60 + "%"
+
+
+def test_unknown_host_header_is_refused(client):
+    assert client.get("/", headers={"host": "evil.example"}).status_code == 400
+    assert client.get("/", headers={"host": "localhost:8000"}).status_code == 200
+    assert client.get("/", headers={"host": "127.0.0.1:8000"}).status_code == 200

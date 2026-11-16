@@ -10,6 +10,8 @@ import sys
 import psycopg
 from dotenv import load_dotenv
 
+from db.connect import with_tls
+
 TABLES = ["lifter", "competition", "entry", "attempt", "sinclair_coefficient"]
 
 
@@ -31,7 +33,7 @@ def check(label: str, env_var: str, expect_write: bool) -> bool:
         print(f"[skip] {label}: {env_var} not filled in")
         return True
     try:
-        with psycopg.connect(url, autocommit=True, connect_timeout=15) as conn:
+        with psycopg.connect(with_tls(url), autocommit=True, connect_timeout=15) as conn:
             user = conn.execute("SELECT current_user").fetchone()[0]
             found = {
                 r[0]

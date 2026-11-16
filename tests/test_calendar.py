@@ -82,3 +82,16 @@ def test_fetch_stops_on_unexpected_answers(monkeypatch, pages):
 def test_get_json_refuses_other_hosts():
     with pytest.raises(SyncError, match="Refusing"):
         fetch_calendar._get_json("https://example.com/wp-json/")
+
+
+@pytest.mark.parametrize(
+    "url", ["https://example.com/wp-json/", "http://vaegtloeftning.dk/wp-json/tribe/events/v1"]
+)
+def test_redirects_are_only_followed_within_the_source(url):
+    handler = fetch_calendar._SameHostRedirects()
+    request = fetch_calendar.urllib.request.Request(fetch_calendar.API_URL)
+    with pytest.raises(SyncError, match="Refusing"):
+        handler.redirect_request(request, None, 302, "Found", {}, url)
+    same_host = fetch_calendar.API_URL + "/"
+    followed = handler.redirect_request(request, None, 302, "Found", {}, same_host)
+    assert followed.full_url == same_host

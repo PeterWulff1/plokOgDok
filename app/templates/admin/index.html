@@ -98,8 +98,7 @@
           <td class="n">{{ c.lifters }}</td>
           <td class="n">
             <form method="post" action="/admin/slet/{{ c.id }}"
-                  data-confirm="Slet {{ c.name }}? Det kan ikke fortrydes."
-                  onsubmit="return confirm(this.dataset.confirm)">
+                  data-confirm="Slet {{ c.name }}? Det kan ikke fortrydes.">
               <input type="hidden" name="csrf" value="{{ csrf }}">
               <button type="submit" class="btn danger small">Slet</button>
             </form>

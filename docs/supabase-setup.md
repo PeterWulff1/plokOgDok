@@ -40,7 +40,23 @@ Then fill in `DATABASE_URL_WRITE` and `DATABASE_URL_READ` in `.env`. Same host a
 
 Run `uv run python -m db.check` again. All three lines should be `[ok]`, and the reader must say `read-only`.
 
+## 5. Create the calendar user for GitHub
+
+The nightly workflow syncs the calendar. It gets its own user that can only write `vl.calendar_event` (migration 020), so the full write role never leaves your machine.
+
+1. In the **SQL Editor**, with a new password (letters and digits only):
+
+   ```sql
+   CREATE ROLE vl_calendar_sync LOGIN PASSWORD 'replace-me-3' IN ROLE vl_calendar;
+   ```
+
+2. On GitHub: repository **Settings → Secrets and variables → Actions → New repository secret**. Name `DATABASE_URL_CALENDAR`, value the same URI as the others with user `vl_calendar_sync.PROJECT_REF` and `?sslmode=require` at the end.
+3. Delete the `DATABASE_URL_WRITE` secret on GitHub. The workflow no longer uses it.
+
+Locally, the sync keeps using `DATABASE_URL_WRITE` unless you also put `DATABASE_URL_CALENDAR` in `.env`.
+
 ## Notes
 
+- Every connection to a database that isn't on this machine uses TLS: `db/connect.py` adds `sslmode=require` when the URL doesn't set an `sslmode` itself.
 - The `vl` schema is **not** exposed through Supabase's REST API. Don't add it under *Settings → API → Exposed schemas*: the app connects to Postgres directly.
 - Free-tier projects pause after a week without activity. Unpause from the dashboard if connections suddenly time out.

@@ -10,6 +10,13 @@
 // Attempt cells turn green or red as you type, using the same notation as
 // core/manual_entry.py: "95" made, "95x" or "-95" missed.
 (function () {
+  // Forms with data-confirm (deleting a competition) ask before they submit. Done here and
+  // not with an inline onsubmit, which the site's Content-Security-Policy blocks.
+  document.addEventListener("submit", function (event) {
+    const message = event.target.dataset.confirm;
+    if (message && !window.confirm(message)) event.preventDefault();
+  });
+
   const grid = document.getElementById("entry-grid");
   if (!grid) return;
   const body = grid.tBodies[0];

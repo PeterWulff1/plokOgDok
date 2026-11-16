@@ -183,3 +183,11 @@ def test_entry_grid_has_hidden_lifter_id(client):
     html = client.get("/admin").text
     assert 'name="rows-0-lifter_id"' in html and 'type="hidden"' in html
     assert "admin-entry.js" in html
+
+
+def test_admin_pages_are_not_cached_and_have_no_inline_handlers(client):
+    assert client.get("/admin/login").headers["cache-control"] == "no-store"
+    _login(client)
+    r = client.get("/admin")
+    assert r.headers["cache-control"] == "no-store"
+    assert not re.search(r'\son[a-z]+="', r.text)
