@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import flame %}
 
 {% set GENDER_ONE = {"M": "Mand", "F": "Kvinde"} %}
 {% set AGE_LABEL = {"ungdom": "Ungdom (≤17)", "junior": "Junior (18–20)", "senior": "Senior (21–34)",
@@ -202,7 +203,7 @@
         {% for r in lifters %}
         <tr data-status="{{ 'active' if r.is_active else 'former' }}" data-gender="{{ r.gender or '' }}" data-age="{{ r.age_group }}">
           <td data-v="{{ r.name }}">
-            <a class="name-link" href="/loefter/{{ r.lifter_id }}">{{ r.name }}</a>
+            <a class="name-link" href="/loefter/{{ r.lifter_id }}">{{ r.name }}</a>{{ flame(r.is_hot) }}
             <span class="sub">{{ GENDER_ONE.get(r.gender, "") }}{% if r.weight_class %} · {{ r.weight_class }}{% endif %}{% if r.birth_year %} · født {{ r.birth_year }}{% endif %}<span class="show-sm"> · {{ r.starts }} stævner</span></span>
           </td>
           <td class="n hide-sm" data-v="{{ r.starts }}">{{ r.starts }}</td>

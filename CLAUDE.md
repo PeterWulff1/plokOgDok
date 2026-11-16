@@ -135,11 +135,12 @@ The site's name is **Pløk og Døk**. Never brand it with "vlstat" or anything t
 
 **Version 1** (decided 2026-10-19; runs locally only, hosting decided later):
 - **Front page:** latest competitions plus a prominent lifter search.
+- **Competition archive** `/staevner`: every competition, filtered in the browser by year and typed words.
 - **Lifter profile** `/loefter/{lifter_id}` (our own ID; manual lifters have no vlstat_id): PRs (snatch, C&J, total, Sinclair), progression chart, hit rate per attempt number and discipline, snatch/C&J ratio over time, full competition history with attempt colors, and fun stats: favourite weight jump, weigh-in precision (avg kg below the class ceiling), hidden potential (PR snatch + PR C&J minus best total), longest streak of made lifts, most stable lifter.
 - **Competition page** `/staevne/{competition_id}`: results by weight class, competition hit rate, best Sinclair of the day, PRs set, club summary.
 - **Club page** `/klub/{slug}` (slug from `core/clubs.py`): headline numbers, record board, top Sinclair per gender, age profile, loyal lifters, roster with filters (status, gender, age) and column sorting done in the browser. Clubs also show in the search.
-- **Data page** `/data`: every lifter, filtered in the browser (gender, active, age group, DVF weight class, Sjælland/Fyn/Jylland, Sinclair slider) from `v_lifter_data`. Word-style filters, no dropdowns.
-- **Point calculator** `/point`: Sinclair or Q-points in the browser; formulas tested against `core/scoring.py` (`tests/test_points_js.py`).
+- **Data page** `/data`: every lifter, filtered in the browser (gender, active, age group, DVF weight class, Sjælland/Fyn/Jylland, foreign clubs hidden by default, Sinclair slider) from `v_lifter_data`. Word-style filters, no dropdowns.
+- **Point calculator** `/point`: Sinclair or Q-points in the browser, the reverse (total needed for a wanted score, shared between snatch and C&J) and the placement among active Danish lifters in the class (`core/ranking.py`); formulas tested against `core/` (`tests/test_points_js.py`).
 - **Admin page:** password login (`ADMIN_PASSWORD`), add competitions via form or CSV. Uses the write role only after login.
 - Not in v1: leaderboards.
 
@@ -148,10 +149,13 @@ Desktop and mobile get equal attention. UI text in Danish.
 ## UI conventions
 
 - Colors: background `#FFF9F2` (Light Cream), panels/sidebar/tables `#F3E6D5` (Warm Beige), headings/primary buttons `#800020` (Deep Burgundy), accents/metrics/PR markers/chart highlights `#D45060` (Coral Rose). Define them once as CSS custom properties in `app/static/`, not inline.
+- **Night mode:** a second palette under `:root[data-theme="dark"]` in `site.css`, set by `static/js/theme.js` (the Nat/Dag word in the menu, else the device's setting). Never hardcode white or ink in a rule: use the role variables (`--surface`, `--line`, `--shadow`, `--brand-fill`, `--on-brand`) so both themes work. Check new UI in both.
+- **"Varm" lifters** (`v_lifter_form.is_hot`: PR at the latest competition, within half a year) get a small orange flame after the name (`flame` macro, class `hot`). Orange is only for this; coral stays for PRs.
 - Attempts display as the plain number (e.g. `95`). Show made vs. missed **by color only**: dark green for made, `#D45060` for missed. No strikethrough, no minus signs, no X.
 - **PRs:** a thick coral underline under the number that set the record (class `is-pr`: the total, or the made attempt that was the new best snatch/C&J). No stamps, badges, superscripts or icons; nothing that adds width to table cells. A lifter's first competition is marked "debut" in the sub-line instead, since everything there is trivially a PR. The line draws itself in the first time it scrolls into view (`static/js/site.js`).
 - **Print** (`@media print` in `site.css`): pages print as a plain protocol sheet. There, and only there, a missed attempt is also light and italic, since colour may not survive the printer.
 - **Missing pages** get `404.html` (three red referee lamps); the static build writes it as `site/404.html`.
+- **Clubs at a competition** rank by average Sinclair (`avg_sinclair`), not the sum.
 - **Sinclair across genders:** never rank women and men together. Show the best woman and the best man separately (`v_competition_best_by_gender`).
 - **Logo font:** Anton (uppercase). Headings: Big Shoulders Display. Body: Archivo.
 - **Front page headline:** plain and functional ("Find en løfter"). No slogans or marketing copy anywhere.

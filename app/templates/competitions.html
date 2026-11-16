@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import competition_head, competition_row %}
+
+{% block title %}Stævner · Pløk og Døk{% endblock %}
+{% block description %}Alle {{ competitions|length }} stævner i dansk vægtløftning siden 2019. Find et stævne efter år eller navn.{% endblock %}
+
+{% block content %}
+{% set years = competitions|map(attribute="date.year")|unique|list %}
+<section class="page-head">
+  <p class="kicker">Arkiv{% if years %} · {{ years|last }}–{{ years|first }}{% endif %}</p>
+  <h1>Stævner</h1>
+</section>
+
+{# Every competition is in the table below; static/js/table-tools.js filters the rows by
+   year and by the words typed. Without JavaScript the whole list is shown. #}
+<div class="archive-tools">
+  <label class="field">
+    <span>Søg i stævner</span>
+    <input type="search" data-search-for="archive" autocomplete="off" spellcheck="false" placeholder="fx DM, Aalborg eller et navn">
+  </label>
+  <form class="filters" data-table="archive" hidden>
+    <fieldset>
+      <legend>År</legend>
+      <label><input type="radio" name="year" value="" checked><span>Alle</span></label>
+      {% for y in years %}
+      <label><input type="radio" name="year" value="{{ y }}"><span>{{ y }}</span></label>
+      {% endfor %}
+    </fieldset>
+  </form>
+</div>
+
+<section class="section data-section">
+  <div class="section-head">
+    <h2 id="archive-heading">Alle stævner</h2>
+    <span class="kicker"><output data-count-for="archive" data-count-text="{shown} af {total} stævner" aria-live="polite">{{ competitions|length }} stævner</output></span>
+  </div>
+  <div class="table-wrap">
+    <table id="archive" class="sortable" aria-labelledby="archive-heading">
+      <thead>{{ competition_head() }}</thead>
+      <tbody>
+        {% for c in competitions %}{{ competition_row(c) }}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="chart-note" data-empty-for="archive" hidden>Ingen stævner passer til søgningen.</p>
+  <p class="chart-note">Nyeste først. Søgningen ser på stævnets navn, dato og dagens bedste løftere.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ static_url('js/table-tools.js') }}" defer></script>{% endblock %}

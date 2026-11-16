@@ -113,3 +113,25 @@ def test_resolve_gender():
     assert resolve_gender([Gender.FEMALE, None, Gender.FEMALE]) == Gender.FEMALE
     assert resolve_gender([Gender.FEMALE, Gender.MALE]) is None
     assert resolve_gender([None]) is None
+
+
+def test_required_total_is_the_smallest_total_reaching_the_points():
+    from core.scoring import required_total, sinclair_factor
+
+    factor = sinclair_factor(80.0, MEN_2017)
+    need = required_total(300, factor)
+    assert need * factor >= 300 > (need - 1) * factor
+    assert required_total(250, 1.0) == 250  # exact hit needs no extra kilo
+    assert required_total(250.2, 1.0) == 251
+
+
+@pytest.mark.parametrize(
+    ("snatch", "cj", "missing", "expected"),
+    [(100, 125, 9, (4, 5)), (100, 100, 1, (1, 0)), (80, 100, 0, (0, 0)), (80, 100, -3, (0, 0)),
+     (60, 90, 10, (4, 6))],
+)  # fmt: skip
+def test_split_increase_shares_the_missing_kilos(snatch, cj, missing, expected):
+    from core.scoring import split_increase
+
+    assert split_increase(snatch, cj, missing) == expected
+    assert sum(expected) == max(missing, 0)

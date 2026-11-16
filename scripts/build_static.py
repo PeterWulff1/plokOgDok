@@ -66,6 +66,7 @@ def search_index() -> dict:
             "club": row["club"],
             "pr": formatting.num(row["pr_total"]),
             "last": formatting.dk_date(row["last_date"]),
+            "hot": bool(row["is_hot"]),
         }
         for row in queries.search_index()
     ]
@@ -77,7 +78,7 @@ def page_urls(client_limit: int | None) -> list[str]:
     lifters = queries._all("SELECT lifter_id FROM vl.mv_lifter_summary ORDER BY 1")
     if client_limit:
         lifters = lifters[:client_limit]
-    urls = ["/", "/kalender", "/data", "/point"]
+    urls = ["/", "/staevner", "/kalender", "/data", "/point"]
     urls += [f"/klub/{club_slug(c['club'])}" for c in queries.all_clubs() if club_slug(c["club"])]
     urls += [f"/staevne/{c['competition_id']}" for c in comps]
     urls += [f"/loefter/{row['lifter_id']}" for row in lifters]

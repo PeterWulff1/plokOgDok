@@ -54,6 +54,16 @@
       <label><input type="checkbox" name="region" value="{{ a }}"><span>{{ a }}</span></label>
       {% endfor %}
     </fieldset>
+    <fieldset>
+      <legend>Udenlandske klubber</legend>
+      {% for value, label, title in [
+        ("", "Skjul", "Kun løftere fra danske klubber"),
+        ("show", "Vis", "Danske og udenlandske klubber"),
+        ("only", "Kun", "Kun gæster fra udenlandske klubber"),
+      ] %}
+      <label title="{{ title }}"><input type="radio" name="foreign" value="{{ value }}"{% if not value %} checked{% endif %}><span>{{ label }}</span></label>
+      {% endfor %}
+    </fieldset>
   </div>
 
   <div class="slider" id="sinclair-filter">
@@ -96,7 +106,7 @@
   </div>
   <p class="chart-note" id="data-empty" hidden>Ingen løftere passer til filtrene.</p>
   <p class="more"><button type="button" class="btn ghost small" id="data-more" hidden>Vis flere</button></p>
-  <p class="chart-note">Træk, stød, total og Sinclair er personlige rekorder fra 2019 og frem. Aktiv = stævne inden for det seneste år. Klassen er ud fra seneste indvejning, med vægtklasserne fra <a href="https://vaegtloeftning.dk/kvalifikation-og-tilmelding/" rel="noopener">Dansk Vægtløftnings-Forbund</a>. Landsdel efter klubbens adresse hos <a href="https://vaegtloeftning.dk/find-klub/" rel="noopener">forbundet</a>.</p>
+  <p class="chart-note">Træk, stød, total og Sinclair er personlige rekorder fra 2019 og frem. Aktiv = stævne inden for det seneste år. <span class="hot" aria-hidden="true"></span> = varm: PR ved seneste stævne, inden for det seneste halve år. Løftere fra udenlandske klubber er skjult, til du vælger andet. Klassen er ud fra seneste indvejning, med vægtklasserne fra <a href="https://vaegtloeftning.dk/kvalifikation-og-tilmelding/" rel="noopener">Dansk Vægtløftnings-Forbund</a>. Landsdel efter klubbens adresse hos <a href="https://vaegtloeftning.dk/find-klub/" rel="noopener">forbundet</a>.</p>
 </section>
 
 <script type="application/json" id="data-lifters">{{ lifters|tojson }}</script>

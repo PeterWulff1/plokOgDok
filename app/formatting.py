@@ -123,6 +123,7 @@ def lifter_data_rows(rows: list[dict], club_slug) -> list[dict]:
             "age": r["age_group"],
             "active": bool(r["is_active"]),
             "form": bool(r["has_recent_pr"]),
+            "hot": bool(r["is_hot"]),
             "lastPr": r["last_pr_date"].isoformat() if r["last_pr_date"] else None,
             "lastPrText": dk_date(r["last_pr_date"]) if r["last_pr_date"] else None,
         }

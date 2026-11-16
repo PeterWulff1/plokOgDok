@@ -24,10 +24,18 @@
     return node;
   }
 
-  function hit(href, who, meta, pr, prLabel) {
+  function hit(href, who, meta, pr, prLabel, hot) {
     const a = el("a");
     a.href = base + href;
-    a.append(el("span", "who", who), el("span", "meta", meta));
+    const name = el("span", "who", who);
+    if (hot) {
+      const flame = el("span", "hot");
+      flame.setAttribute("role", "img");
+      flame.setAttribute("aria-label", "varm: PR ved seneste stævne");
+      flame.title = "Varm: PR ved seneste stævne";
+      name.append("\u00A0", flame);
+    }
+    a.append(name, el("span", "meta", meta));
     const p = el("span", "pr", pr);
     p.append(el("small", null, prLabel));
     a.append(p);
@@ -57,7 +65,7 @@
       if (lifters.length) out.append(el("div", "group-label", "Løftere"));
     }
     for (const l of lifters) {
-      out.append(hit(`/loefter/${l.id}`, l.name, `${l.club || "Ukendt klub"} · sidst ${l.last}`, l.pr, "bedste total"));
+      out.append(hit(`/loefter/${l.id}`, l.name, `${l.club || "Ukendt klub"} · sidst ${l.last}`, l.pr, "bedste total", l.hot));
     }
     if (!clubs.length && !lifters.length) {
       out.append(el("div", "none", `Ingen løftere eller klubber matcher “${q.trim()}”.`));

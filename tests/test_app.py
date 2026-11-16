@@ -163,7 +163,14 @@ DATA_ROW = {
     "pr_sinclair": Decimal("281.37"), "competitions": 15, "last_date": date(2026, 9, 26),
     "is_active": True, "age_group": "senior", "first_date": date(2019, 11, 17),
     "is_new": False, "last_pr_date": date(2025, 2, 1), "has_recent_pr": False, "area": "Sjælland",
+    "is_hot": True,
 }  # fmt: skip
+COMPETITION = {
+    "competition_id": 3, "name": "Aalborg cup 2024", "date": date(2024, 10, 5), "lifters": 31,
+    "hit_rate": Decimal("0.71"), "lifters_with_pr": 9, "best_f_name": None,
+    "best_m_name": "Test Løfter", "best_m_lifter_id": 7, "best_m_sinclair": Decimal("373.03"),
+}  # fmt: skip
+OLD_COMPETITION = dict(COMPETITION, competition_id=1, name="Testcup 2019", date=date(2019, 12, 28))
 COEFFICIENTS = [
     {"gender": g, "a": Decimal(a), "b": Decimal(b), "valid_from_year": y0, "valid_to_year": y1}
     for g, a, b, y0, y1 in [
@@ -181,7 +188,11 @@ def client(monkeypatch):
     q = app_main.queries
     monkeypatch.setattr(q, "open_pool", lambda url=None: None)
     monkeypatch.setattr(q, "close_pool", lambda: None)
-    monkeypatch.setattr(q, "latest_competitions", lambda limit=12: [])
+    monkeypatch.setattr(
+        q,
+        "latest_competitions",
+        lambda limit=12: [] if limit else [COMPETITION, OLD_COMPETITION],
+    )
     monkeypatch.setattr(
         q, "site_totals",
         lambda: {"lifters": 2, "competitions": 1, "attempts": 12, "since": date(2019, 1, 5)},
@@ -325,7 +336,7 @@ def test_lifter_data_rows_and_sinclair_sets():
     assert row == {
         "id": 689, "name": "Peter Klinge Wulff", "g": "M", "club": "AK Gotha",
         "slug": "ak-gotha", "area": "Sjælland", "wc": "-85", "sn": 100, "cj": 125,
-        "tot": 225, "sin": 281.37, "age": "senior", "active": True, "form": False,
+        "tot": 225, "sin": 281.37, "age": "senior", "active": True, "form": False, "hot": True,
         "lastPr": "2025-02-01", "lastPrText": "1. feb. 2025",
     }  # fmt: skip
     sets = formatting.sinclair_sets(COEFFICIENTS)
@@ -348,6 +359,38 @@ def test_data_page(client):
     assert 'name="status" value="new"' not in text and 'name="age" value="junior"' in text
     assert "<select" not in text and "js/lifter-data.js" in text
     assert 'href="/data"' in text  # in the main menu
+    # Foreign guest clubs are hidden until asked for.
+    assert 'name="foreign" value="" checked' in text and 'name="foreign" value="only"' in text
+    assert '"hot": true' in text
+
+
+def test_competition_archive_lists_every_competition_by_year(client):
+    r = client.get("/staevner")
+    assert r.status_code == 200
+    text = r.text
+    assert 'href="/staevne/3"' in text and 'href="/staevne/1"' in text
+    assert 'data-year="2024"' in text and 'data-year="2019"' in text
+    assert 'name="year" value="2019"' in text and 'data-search-for="archive"' in text
+    assert "Arkiv · 2019–2024" in text and "js/table-tools.js" in text
+    assert 'href="/staevner"' in client.get("/").text  # the menu and the front page link to it
+
+
+def test_hot_lifters_get_a_flame_in_search_and_roster(client, monkeypatch):
+    hot = {"lifter_id": 7, "name": "Test Løfter", "club": "AK Gotha", "pr_total": 288,
+           "last_date": date(2026, 10, 12), "is_hot": True}  # fmt: skip
+    monkeypatch.setattr(
+        app_main.queries, "search_lifters", lambda q: [hot, dict(hot, lifter_id=8, is_hot=False)]
+    )
+    text = client.get("/sog", params={"q": "test"}).text
+    assert text.count('class="hot"') == 1
+    assert 'class="hot"' not in client.get("/klub/aarhus-atlet-klub").text
+
+
+def test_every_page_can_switch_to_night(client):
+    text = client.get("/").text
+    assert "js/theme.js" in text and 'id="theme-toggle"' in text
+    # Set before the page paints, so it isn't deferred like the other scripts.
+    assert re.search(r'<script src="/static/js/theme\.js\?v=\d+"></script>', text)
 
 
 def test_points_page(client):
@@ -360,6 +403,9 @@ def test_points_page(client):
     assert "<select" not in text
     assert "Sådan regnes det" not in text
     assert ">DM-krav<" in text and '"qualifying_total": 190' in text
+    # Reverse mode and the class ranking: active Danish lifters' best totals per class.
+    assert 'name="mode" value="total"' in text and 'name="target"' in text
+    assert '"ranking": {"M": {"-85": [225]}}' in text
 
 
 def test_missing_pages_get_the_sites_own_404_page(client):

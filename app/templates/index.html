@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "partials/macros.html" import event_row %}
+{% from "partials/macros.html" import event_row, competition_head, competition_row %}
 
 {% block content %}
 <section class="hero" id="sog">
@@ -62,39 +62,13 @@
 <section class="section" id="staevner">
   <div class="section-head">
     <h2>Seneste stævner</h2>
-    <span class="kicker">Nyeste først</span>
+    <a class="kicker" href="/staevner">Alle stævner</a>
   </div>
   <div class="table-wrap">
     <table>
-      <thead>
-        <tr>
-          <th>Dato</th>
-          <th>Stævne</th>
-          <th class="n">Løftere</th>
-          <th class="n hide-sm">Ramte</th>
-          <th class="hide-sm">Bedste kvinde</th>
-          <th class="hide-sm">Bedste mand</th>
-          <th class="n">PR'er</th>
-        </tr>
-      </thead>
+      <thead>{{ competition_head() }}</thead>
       <tbody>
-        {% for c in competitions %}
-        <tr>
-          <td class="tab">{{ c.date|dk_date }}</td>
-          <td><a class="name-link" href="/staevne/{{ c.competition_id }}">{{ c.name }}</a></td>
-          <td class="n">{{ c.lifters }}</td>
-          <td class="n hide-sm">{{ c.hit_rate|pct }}</td>
-          {% for g in ["f", "m"] %}
-          <td class="hide-sm">
-            {% if c["best_" ~ g ~ "_name"] %}
-              <a href="/loefter/{{ c['best_' ~ g ~ '_lifter_id'] }}">{{ c["best_" ~ g ~ "_name"] }}</a>
-              <span class="sub tab">{{ c["best_" ~ g ~ "_sinclair"]|num(1) }} Sinclair</span>
-            {% else %}<span class="sub">–</span>{% endif %}
-          </td>
-          {% endfor %}
-          <td class="n">{{ c.lifters_with_pr }}</td>
-        </tr>
-        {% endfor %}
+        {% for c in competitions %}{{ competition_row(c) }}{% endfor %}
       </tbody>
     </table>
   </div>

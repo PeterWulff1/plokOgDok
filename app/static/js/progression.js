@@ -26,7 +26,7 @@
         marker: {
           size: data[prKey].map((pr) => (pr ? 11 : 8)),
           color: color,
-          line: { color: data[prKey].map((pr) => (pr ? coral : "#ffffff")), width: data[prKey].map((pr) => (pr ? 3 : 2)) },
+          line: { color: data[prKey].map((pr) => (pr ? coral : css("--surface"))), width: data[prKey].map((pr) => (pr ? 3 : 2)) },
         },
         connectgaps: true,
         hovertemplate: "<b>%{customdata}</b><br>%{x|%d.%m.%Y}<br>" + name + ": %{y} kg<extra></extra>",
@@ -52,8 +52,8 @@
 
     Plotly.newPlot(el, traces, {
       margin: { l: 48, r: 56, t: 16, b: 40 },
-      paper_bgcolor: "#ffffff",
-      plot_bgcolor: "#ffffff",
+      paper_bgcolor: css("--surface"),
+      plot_bgcolor: css("--surface"),
       font: { family: font, size: 13, color: ink2 },
       hovermode: "closest",
       hoverlabel: { bgcolor: css("--paper"), bordercolor: ink, font: { family: font, color: ink } },
@@ -61,9 +61,12 @@
       legend: { orientation: "h", x: 0, y: 1.08, font: { family: font, size: 13, color: ink } },
       annotations: annotations,
       xaxis: { showgrid: false, linecolor: ink, ticks: "outside", tickcolor: ink, fixedrange: true },
-      yaxis: { gridcolor: "#EFE6DA", zeroline: false, ticksuffix: " kg", fixedrange: true },
+      yaxis: { gridcolor: css("--grid"), zeroline: false, ticksuffix: " kg", fixedrange: true },
     }, { displayModeBar: false, responsive: true });
   }
+
+  // Day/night switch (static/js/theme.js): draw again with the new palette.
+  document.addEventListener("themechange", () => { if (window.Plotly) draw(); });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => window.addEventListener("load", draw));

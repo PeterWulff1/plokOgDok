@@ -71,3 +71,40 @@
   </td>
 </tr>
 {%- endmacro %}
+
+{# A small flame after the name of a lifter who is "varm": a PR at their latest competition,
+   held within the last half year (vl.v_lifter_form.is_hot). #}
+{% macro flame(hot) -%}
+  {%- if hot %}&nbsp;<span class="hot" role="img" aria-label="varm: PR ved seneste stævne" title="Varm: PR ved seneste stævne"></span>{% endif -%}
+{%- endmacro %}
+
+{# The competition list: front page (latest) and the archive (/staevner, every one). #}
+{% macro competition_head() -%}
+<tr>
+  <th>Dato</th>
+  <th>Stævne</th>
+  <th class="n">Løftere</th>
+  <th class="n hide-sm">Ramte</th>
+  <th class="hide-sm">Bedste kvinde</th>
+  <th class="hide-sm">Bedste mand</th>
+  <th class="n">PR'er</th>
+</tr>
+{%- endmacro %}
+
+{% macro competition_row(c) -%}
+<tr data-year="{{ c.date.year }}">
+  <td class="tab">{{ c.date|dk_date }}</td>
+  <td><a class="name-link" href="/staevne/{{ c.competition_id }}">{{ c.name }}</a></td>
+  <td class="n">{{ c.lifters }}</td>
+  <td class="n hide-sm">{{ c.hit_rate|pct }}</td>
+  {% for g in ["f", "m"] %}
+  <td class="hide-sm">
+    {% if c["best_" ~ g ~ "_name"] %}
+      <a href="/loefter/{{ c['best_' ~ g ~ '_lifter_id'] }}">{{ c["best_" ~ g ~ "_name"] }}</a>
+      <span class="sub tab">{{ c["best_" ~ g ~ "_sinclair"]|num(1) }} Sinclair</span>
+    {% else %}<span class="sub">–</span>{% endif %}
+  </td>
+  {% endfor %}
+  <td class="n">{{ c.lifters_with_pr }}</td>
+</tr>
+{%- endmacro %}

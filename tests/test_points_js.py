@@ -56,3 +56,29 @@ def test_js_dm_missing_matches_core():
     totals = [0, 189, 189.5, 190, 191]
     got = _run_js(f"{json.dumps(totals)}.map(t => m.dmMissingKg({json.dumps(asdict(cls))}, t))")
     assert got == [dm_missing_kg(cls, t) for t in totals]
+
+
+def test_js_required_total_and_split_match_core():
+    from core.scoring import required_total, split_increase
+
+    factors = [1.0, 1.2214, 1.0731, 1.5]
+    targets = [250, 250.2, 300, 333.33, 401]
+    cases = [(t, f) for t in targets for f in factors]
+    got = _run_js(f"{json.dumps(cases)}.map(x => m.requiredTotal(...x))")
+    assert got == [required_total(t, f) for t, f in cases]
+
+    splits = [(100, 125, 9), (100, 100, 1), (80, 100, 0), (80, 100, -3), (60, 90, 10), (57, 71, 23)]
+    got = _run_js(f"{json.dumps(splits)}.map(x => m.splitIncrease(...x))")
+    assert [tuple(g) for g in got] == [split_increase(*s) for s in splits]
+
+
+def test_js_place_and_top_percent_match_core():
+    from core.ranking import place_among, top_percent
+
+    totals = [300, 288, 288, 250]
+    mine = [301, 300, 288, 260, 100]
+    got = _run_js(f"{json.dumps(mine)}.map(t => m.placeAmong({json.dumps(totals)}, t))")
+    assert got == [place_among(totals, t) for t in mine]
+    cases = [(1, 85), (12, 85), (86, 85), (1, 0)]
+    got = _run_js(f"{json.dumps(cases)}.map(x => m.topPercent(...x))")
+    assert got == [top_percent(*c) for c in cases]

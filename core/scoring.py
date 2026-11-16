@@ -87,3 +87,19 @@ def q_points(
     if lifted_total is None or bodyweight is None or gender is None:
         return None
     return lifted_total * q_points_factor(bodyweight, Q_POINTS[gender])
+
+
+def required_total(target_points: float, factor: float) -> int:
+    """The smallest whole-kg total that reaches `target_points` at a bodyweight's factor
+    (the reverse of points = total * factor). Bars are loaded in whole kilos."""
+    return math.ceil(target_points / factor - 1e-9)
+
+
+def split_increase(snatch: float, cj: float, missing_kg: int) -> tuple[int, int]:
+    """Share `missing_kg` between snatch and C&J in proportion to the current lifts, in
+    whole kilos: (kg to add to the snatch, kg to add to the C&J). The two always sum to
+    `missing_kg`, so the new total is exactly the one required and no kilo is wasted."""
+    if missing_kg <= 0:
+        return 0, 0
+    to_snatch = math.floor(missing_kg * snatch / (snatch + cj) + 0.5)
+    return to_snatch, missing_kg - to_snatch

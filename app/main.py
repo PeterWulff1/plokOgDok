@@ -23,6 +23,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app import formatting
 from core.clubs import club_slug, find_club, match_clubs
 from core.qualification import DM_SENIOR_CLASSES
+from core.ranking import class_totals
 from core.scoring import Q_POINTS
 from db import admin as admin_store
 from db import queries
@@ -156,6 +157,12 @@ def _linked_logos() -> list[dict]:
     return logos
 
 
+@app.get("/staevner", response_class=HTMLResponse)
+def competitions_page(request: Request):
+    """The archive: every competition with results, filtered by year and name in the browser."""
+    return _render(request, "competitions.html", competitions=queries.latest_competitions(None))
+
+
 @app.get("/data", response_class=HTMLResponse)
 def data_page(request: Request):
     return _render(
@@ -174,6 +181,7 @@ def points_page(request: Request):
         sinclair=formatting.sinclair_sets(queries.sinclair_coefficients()),
         qpoints=formatting.q_points_constants(Q_POINTS),
         dm=formatting.dm_classes(DM_SENIOR_CLASSES),
+        ranking=class_totals(queries.lifter_data()),
     )
 
 

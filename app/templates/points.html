@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Pointberegner · Pløk og Døk{% endblock %}
-{% block description %}Regn Sinclair-point eller Q-point ud fra køn, kropsvægt og total.{% endblock %}
+{% block description %}Regn Sinclair-point eller Q-point ud fra køn, kropsvægt og total, eller find den total et ønsket pointtal kræver.{% endblock %}
 
 {% block content %}
 <section class="page-head">
@@ -14,6 +14,11 @@
 <form class="calc" id="point-form" hidden>
   <div class="calc-in">
     <div class="filters">
+      <fieldset>
+        <legend>Regn ud</legend>
+        <label><input type="radio" name="mode" value="points" checked><span>Point</span></label>
+        <label title="Hvad skal jeg løfte for at nå et bestemt pointtal?"><input type="radio" name="mode" value="total"><span>Krævet total</span></label>
+      </fieldset>
       <fieldset>
         <legend>Pointsystem</legend>
         <label><input type="radio" name="system" value="sinclair" checked><span>Sinclair</span></label>
@@ -30,12 +35,16 @@
       <span>Kropsvægt, kg</span>
       <input type="number" name="bw" inputmode="decimal" min="20" max="250" step="0.01" placeholder="fx 80,45">
     </label>
-    <label class="field big">
+    <label class="field big" id="field-total">
       <span>Total, kg</span>
       <input type="number" name="total" inputmode="decimal" min="0" step="1" placeholder="kg">
     </label>
+    <label class="field big" id="field-target" hidden>
+      <span id="target-label">Ønsket Sinclair</span>
+      <input type="number" name="target" inputmode="decimal" min="0" step="0.1" placeholder="fx 300">
+    </label>
     <div class="calc-split">
-      <span class="or">eller</span>
+      <span class="or" id="split-or">eller</span>
       <label class="field"><span>Træk, kg</span><input type="number" name="sn" inputmode="decimal" min="0" step="1"></label>
       <label class="field"><span>Stød, kg</span><input type="number" name="cj" inputmode="decimal" min="0" step="1"></label>
     </div>
@@ -57,6 +66,26 @@
   </div>
 </form>
 
+<section class="section" id="path-section" hidden>
+  <div class="section-head"><h2>Vejen dertil</h2><span class="kicker" id="path-kicker"></span></div>
+  <dl class="dm-req" aria-live="polite">
+    <div><dt>Træk</dt><dd id="path-sn">–</dd></div>
+    <div><dt>Stød</dt><dd id="path-cj">–</dd></div>
+    <div><dt>Total</dt><dd id="path-total">–</dd></div>
+  </dl>
+  <p class="chart-note">De manglende kilo er delt mellem træk og stød efter, hvor meget du løfter i hver i dag, i hele kilo. Totalen er den mindste, der når pointtallet.</p>
+</section>
+
+<section class="section" id="rank-section" hidden>
+  <div class="section-head"><h2>Placering</h2><span class="kicker" id="rank-kicker">Aktive i Danmark</span></div>
+  <dl class="dm-req" aria-live="polite">
+    <div><dt>Vægtklasse</dt><dd id="rank-class">–</dd></div>
+    <div><dt>Plads</dt><dd id="rank-place">–</dd></div>
+    <div><dt>Du er i</dt><dd id="rank-top">–</dd></div>
+  </dl>
+  <p class="chart-note">Sammenlignet på bedste total siden 2019 med aktive løftere fra danske klubber (stævne inden for det seneste år) i samme klasse efter seneste indvejning. <a id="rank-link" href="/data" hidden>Se klassen på datasiden</a></p>
+</section>
+
 <section class="section" id="dm-section" hidden>
   <div class="section-head"><h2>DM-krav</h2></div>
   <dl class="dm-req" aria-live="polite">
@@ -67,7 +96,7 @@
   <p class="chart-note">DM Senior. Klasser og krav fra <a href="https://vaegtloeftning.dk/kvalifikation-og-tilmelding/" rel="noopener">Dansk Vægtløftnings-Forbund</a>.</p>
 </section>
 
-<script type="application/json" id="point-coefficients">{{ {"sinclair": sinclair, "qpoints": qpoints, "dm": dm}|tojson }}</script>
+<script type="application/json" id="point-coefficients">{{ {"sinclair": sinclair, "qpoints": qpoints, "dm": dm, "ranking": ranking}|tojson }}</script>
 {% endblock %}
 
 {% block scripts %}<script src="{{ static_url('js/points.js') }}" defer></script>{% endblock %}

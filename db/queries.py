@@ -56,7 +56,8 @@ def _one(sql: str, params: tuple = ()) -> Row | None:
 # --- Front page -------------------------------------------------------------------
 
 
-def latest_competitions(limit: int = 12) -> list[Row]:
+def latest_competitions(limit: int | None = 12) -> list[Row]:
+    """Competitions with results, newest first. limit=None gives every one (the archive)."""
     return _all(
         """
         SELECT c.*, f.name AS best_f_name, m.name AS best_m_name
@@ -78,10 +79,12 @@ def search_lifters(query: str, limit: int = 8) -> list[Row]:
     literal = re.sub(r"([\\%_])", r"\\\1", query)  # match the text, not as wildcards
     return _all(
         """
-        SELECT lifter_id, name, club, gender, pr_total, pr_sinclair, last_date
-        FROM vl.mv_lifter_summary
-        WHERE name ILIKE %s
-        ORDER BY (name ILIKE %s) DESC, last_date DESC
+        SELECT s.lifter_id, s.name, s.club, s.gender, s.pr_total, s.pr_sinclair, s.last_date,
+               f.is_hot
+        FROM vl.mv_lifter_summary s
+        JOIN vl.v_lifter_form f ON f.lifter_id = s.lifter_id
+        WHERE s.name ILIKE %s
+        ORDER BY (s.name ILIKE %s) DESC, s.last_date DESC
         LIMIT %s
         """,
         (f"%{literal}%", f"{literal}%", limit),
@@ -92,9 +95,10 @@ def search_index() -> list[Row]:
     """Every lifter for the static site's in-browser search, most recently active first."""
     return _all(
         """
-        SELECT lifter_id, name, club, pr_total, last_date
-        FROM vl.mv_lifter_summary
-        ORDER BY last_date DESC, lifter_id
+        SELECT s.lifter_id, s.name, s.club, s.pr_total, s.last_date, f.is_hot
+        FROM vl.mv_lifter_summary s
+        JOIN vl.v_lifter_form f ON f.lifter_id = s.lifter_id
+        ORDER BY s.last_date DESC, s.lifter_id
         """
     )
 
@@ -117,9 +121,11 @@ def site_totals() -> Row:
 def lifter_summary(lifter_id: int) -> Row | None:
     return _one(
         """
-        SELECT s.*, p.super_total, p.hidden_potential, p.weigh_in_margin, p.weigh_ins
+        SELECT s.*, p.super_total, p.hidden_potential, p.weigh_in_margin, p.weigh_ins,
+               f.is_hot
         FROM vl.mv_lifter_summary s
         LEFT JOIN vl.v_lifter_potential p ON p.lifter_id = s.lifter_id
+        LEFT JOIN vl.v_lifter_form f ON f.lifter_id = s.lifter_id
         WHERE s.lifter_id = %s
         """,
         (lifter_id,),
@@ -236,11 +242,12 @@ def competition_results(competition_id: int) -> list[Row]:
 
 
 def competition_clubs(competition_id: int) -> list[Row]:
+    """Clubs at a competition, best average Sinclair first."""
     return _all(
         """
         SELECT * FROM vl.v_competition_club
         WHERE competition_id = %s
-        ORDER BY sum_sinclair DESC NULLS LAST
+        ORDER BY avg_sinclair DESC NULLS LAST, club
         """,
         (competition_id,),
     )
@@ -326,9 +333,10 @@ def club_lifters(club: str) -> list[Row]:
     """Everyone who lifted for the club: active first, then by best Sinclair."""
     return _all(
         """
-        SELECT cl.*, l.name, l.gender, l.birth_year
+        SELECT cl.*, l.name, l.gender, l.birth_year, f.is_hot
         FROM vl.v_club_lifter cl
         JOIN vl.lifter l ON l.id = cl.lifter_id
+        LEFT JOIN vl.v_lifter_form f ON f.lifter_id = cl.lifter_id
         WHERE cl.club = %s
         ORDER BY cl.is_active DESC, cl.best_sinclair DESC NULLS LAST, l.name
         """,

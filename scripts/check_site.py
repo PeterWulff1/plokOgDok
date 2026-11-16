@@ -60,7 +60,7 @@ def main() -> None:
         lifters = queries._all("SELECT lifter_id FROM vl.mv_lifter_summary ORDER BY 1")
         if args.lifters:
             lifters = lifters[: args.lifters]
-        urls = ["/", "/kalender", "/data", "/point", "/admin/login"]
+        urls = ["/", "/staevner", "/kalender", "/data", "/point", "/admin/login"]
         urls += ["/sog?q=an", "/sog?q=aarhus", "/sog?q=zzzzzz"]
         urls += [f"/klub/{club_slug(c['club'])}" for c in queries.all_clubs()]
         urls += [f"/staevne/{c['competition_id']}" for c in comps]

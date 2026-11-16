@@ -17,6 +17,7 @@
   const count = document.getElementById("data-count");
   const empty = document.getElementById("data-empty");
   const more = document.getElementById("data-more");
+  const FOREIGN_AREA = "Udland";  // v_lifter_data.area for foreign guest clubs
   const STATUS = {
     active: (r) => r.active,
     former: (r) => !r.active,
@@ -75,9 +76,11 @@
   function matcher() {
     const g = radio("g"), status = radio("status"), age = radio("age"), wc = radio("wc");
     const regions = checked("region");
+    const foreign = radio("foreign");
     const sin = sinRange();
     return (r) =>
       r.g === g &&
+      (foreign === "show" || (r.area === FOREIGN_AREA) === (foreign === "only")) &&
       (!status || STATUS[status](r)) &&
       (!age || r.age === age) &&
       (!wc || r.wc === wc) &&
@@ -99,6 +102,10 @@
     const tr = el("tr");
     const name = el("td");
     name.append(el("a", { class: "name-link", href: `${base}/loefter/${r.id}` }, r.name));
+    if (r.hot) {
+      name.append("\u00A0", el("span", { class: "hot", role: "img", "aria-label": "varm: PR ved seneste stævne",
+        title: "Varm: PR ved seneste stævne" }));
+    }
     const sub = [r.club, r.wc && r.wc + " kg", r.active ? null : "inaktiv"].filter(Boolean);
     name.append(el("span", { class: "sub only-sm" }, sub.join(" · ")));
     tr.append(name);
@@ -137,7 +144,7 @@
   function saveUrl() {
     const s = new URLSearchParams();
     if (radio("g") === "M") s.set("g", "M");
-    for (const name of ["status", "age", "wc"]) if (radio(name)) s.set(name, radio(name));
+    for (const name of ["status", "age", "wc", "foreign"]) if (radio(name)) s.set(name, radio(name));
     const regions = checked("region");
     if (regions.length) s.set("region", regions.join(","));
     const sin = sinRange();
@@ -158,7 +165,7 @@
     const p = new URLSearchParams(location.search);
     const g = p.get("g") === "M" ? "M" : "F";
     form.elements.g.value = g;
-    for (const name of ["status", "age"]) if (p.get(name)) form.elements[name].value = p.get(name);
+    for (const name of ["status", "age", "foreign"]) if (p.get(name)) form.elements[name].value = p.get(name);
     setGender(g, p.get("wc"));
     const regions = (p.get("region") || "").split(",");
     form.querySelectorAll('input[name="region"]').forEach((i) => { i.checked = regions.includes(i.value); });

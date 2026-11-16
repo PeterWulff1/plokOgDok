@@ -2,6 +2,25 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-11-16 — Night mode, archive, "varm" lifters, club average, reverse calculator (migration 021)
+
+**Decision:**
+- **Night mode.** `site.css` has a second palette under `:root[data-theme="dark"]` (screen only, so print stays the light protocol sheet). `static/js/theme.js` sets the theme before the page paints: the visitor's choice from the Nat/Dag word in the menu (kept in `localStorage`), otherwise the device's setting. Colours that differ by theme have their own roles (`--surface`, `--line`, `--shadow`, `--brand-fill`, `--board`); nothing hardcodes white or ink any more. The progression chart reads the palette and redraws on a switch. Club logos sit on a cream card at night, since they are drawn for white paper.
+- **Competition archive** `/staevner`: every competition with results (`queries.latest_competitions(None)`), filtered in the browser by year and by typed words (`table-tools.js` got an optional `data-search-for` input). The menu's "Stævner" goes there; the front page still shows the latest twelve.
+- **"Varm" lifters.** `vl.v_lifter_form.is_hot`: the lifter set a PR (snatch, C&J or total, debut excluded) at their latest competition, and that competition is within the last 183 days. Shown as a small orange flame after the name (`.hot`, `static/flame.svg` as a mask) on the profile, data page, club roster and in the search. Orange, not coral, so it is never read as a PR mark. The older `has_recent_pr` (any PR within a year) stays in the view.
+- **Clubs at a competition rank by average Sinclair** (`v_competition_club.avg_sinclair`, mean over the club's lifters with a valid total) instead of the sum. `sum_sinclair` stays in the view but is no longer shown.
+- **Bodyweight on mobile.** Competition pages hide the weight column on small screens; the weigh-in now follows the club in the sub-line there.
+- **Foreign lifters** (clubs with region `Udland`) are hidden on the data page until the visitor picks "Vis" or "Kun". Competition pages still list everyone who lifted.
+- **Reverse calculator.** `/point` has a second mode, "Krævet total": the smallest whole-kg total that reaches a wanted Sinclair or Q-points score (`core.scoring.required_total`). With today's snatch and C&J typed in, the missing kilos are shared in proportion to the two lifts (`split_increase`), so the new total is exactly the required one.
+- **Placement in the calculator.** "Nr. 9 af 58 · Top 16 %": where the total would place among active lifters (competition within a year) from Danish clubs, same gender and DVF class by latest weigh-in, ranked on best total since 2019 (`core/ranking.py`). The field counts the visitor too, and the percentage rounds up. The page carries the totals per class; `points.js` mirrors the two functions and `tests/test_points_js.py` compares them.
+
+**Reason:** A list of wishes from the first weeks of use. A summed club score mostly measured squad size. "I form" as any PR within a year covered too many lifters to mean "hot right now". Guest lifters from abroad crowded the national lists.
+
+**Consequences:**
+- The class ranking and the data page use the same rows (`v_lifter_data`), so the calculator links to the data page filtered to the same class. The data page can show a couple more lifters than the ranking counts: those without a valid total.
+- A club with one strong lifter now tops the club table at a competition. The lifter count stands next to the average.
+- Hotness is "as of today": an old competition page or profile shows no history of it.
+
 ## 2026-11-16 — Five small details: 404 page, tab icon, drawn record line, search keys, print
 
 **Decision:**

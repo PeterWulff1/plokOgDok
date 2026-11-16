@@ -41,18 +41,18 @@
   <section class="section">
     <div class="section-head">
       <h2>Klubberne</h2>
-      <span class="kicker">Samlet Sinclair</span>
+      <span class="kicker">Gennemsnitlig Sinclair</span>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Klub</th><th class="n">Løftere</th><th class="n">Bedste</th><th class="n">Samlet</th><th class="n">PR</th></tr></thead>
+        <thead><tr><th>Klub</th><th class="n">Løftere</th><th class="n">Bedste</th><th class="n" title="Gennemsnit af klubbens løftere med gyldig total">Gns.</th><th class="n">PR</th></tr></thead>
         <tbody>
           {% for c in clubs %}
           <tr>
             <td>{{ club_link(c.club, "Ukendt") }}</td>
             <td class="n">{{ c.lifters }}</td>
             <td class="n">{{ c.best_sinclair|num(1) }}</td>
-            <td class="n"><b>{{ c.sum_sinclair|num(1) }}</b></td>
+            <td class="n"><b>{{ c.avg_sinclair|num(1) }}</b></td>
             <td class="n">{{ c.total_prs }}</td>
           </tr>
           {% endfor %}
@@ -88,7 +88,7 @@
           <tr>
             <td>
               <a class="name-link" href="/loefter/{{ r.lifter_id }}">{{ r.name }}</a>
-              <span class="sub">{{ r.club or "" }}{{ debut(r) }}{{ suspect(r) }}</span>
+              <span class="sub">{{ r.club or "" }}{% if r.bodyweight %}<span class="show-sm">{{ " · " if r.club }}{{ r.bodyweight|num(2) }} kg</span>{% endif %}{{ debut(r) }}{{ suspect(r) }}</span>
             </td>
             <td class="n hide-sm">{{ r.bodyweight|num(2) }}</td>
             <td>{{ attempts(r) }}</td>
