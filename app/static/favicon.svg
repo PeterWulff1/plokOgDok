@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A loaded bar as on the platform: the big red plates innermost, the small ones outside. -->
+  <rect width="32" height="32" fill="#FFF9F2"/>
+  <rect x="1" y="15" width="30" height="2" fill="#1F1A17"/>
+  <rect x="8" y="5" width="4.5" height="22" fill="#B3202E"/>
+  <rect x="19.5" y="5" width="4.5" height="22" fill="#B3202E"/>
+  <rect x="4" y="10" width="3" height="12" fill="#C9873A"/>
+  <rect x="25" y="10" width="3" height="12" fill="#C9873A"/>
+</svg>

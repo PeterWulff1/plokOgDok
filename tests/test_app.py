@@ -362,6 +362,35 @@ def test_points_page(client):
     assert ">DM-krav<" in text and '"qualifying_total": 190' in text
 
 
+def test_missing_pages_get_the_sites_own_404_page(client):
+    r = client.get("/loefter/1")
+    assert r.status_code == 404
+    assert "Ikke godkendt" in r.text and "Løfteren findes ikke." in r.text
+    assert 'class="lamps" aria-hidden="true"' in r.text and 'href="/#sog"' in r.text
+    unknown = client.get("/findes-ikke")
+    assert unknown.status_code == 404 and "Siden findes ikke." in unknown.text
+    assert "Not Found" not in unknown.text
+    # Files and admin addresses keep the plain answer.
+    for path in ("/static/findes-ikke.css", "/admin/findes-ikke"):
+        plain = client.get(path)
+        assert plain.status_code == 404 and "Ikke godkendt" not in plain.text
+
+
+def test_every_page_has_the_tab_icon_and_the_shared_script(client):
+    html = client.get("/kalender").text
+    assert re.search(r'<link rel="icon" type="image/svg\+xml" href="/static/favicon\.svg\?v=', html)
+    assert re.search(r'<script src="/static/js/site\.js\?v=\d+" defer>', html)
+    assert client.get("/static/favicon.svg").headers["content-type"].startswith("image/svg+xml")
+
+
+def test_record_mark_wraps_only_the_number():
+    macros = app_main.templates.env.get_template("partials/macros.html").module
+    made = {"weight_kg": 95, "is_successful": True}
+    assert '<span class="is-pr">95</span>' in str(macros.attempt(made, True))
+    assert "is-pr" not in str(macros.attempt(made, False))
+    assert "is-pr" not in str(macros.attempt({"weight_kg": 95, "is_successful": False}, True))
+
+
 INLINE_HANDLER = re.compile(r'\son[a-z]+="')
 
 

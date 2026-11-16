@@ -231,12 +231,19 @@ td .sub { display: block; font-size: 13px; color: var(--ink-3); }
   text-transform: uppercase; margin-right: 2px; }
 
 /* PR: a thick coral underline under the number that set the record. Takes no width. */
-.is-pr {
-  text-decoration: underline;
-  text-decoration-color: var(--coral);
-  text-decoration-thickness: 3px;
-  text-underline-offset: 4px;
-  text-decoration-skip-ink: none;
+/* Drawn as a border on a pseudo-element (not text-decoration) so it can be drawn in from the
+   left the first time it scrolls into view (static/js/site.js), and so it still prints. */
+.is-pr { position: relative; display: inline-block; line-height: 1.15; }
+.is-pr::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -0.2em;
+  border-top: 3px solid var(--coral); transform-origin: left center;
+}
+.is-pr.pr-wait::after { transform: scaleX(0); }
+.is-pr.pr-draw::after { animation: pr-draw 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes pr-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .is-pr.pr-wait::after { transform: none; }
+  .is-pr.pr-draw::after { animation: none; }
 }
 .debut { font-style: italic; }
 .suspect { color: var(--miss); border-bottom: 1px dotted currentColor; cursor: help; }
@@ -611,4 +618,63 @@ td.faded { color: var(--ink-3); }
 }
 @media (max-width: 560px) {
   .only-sm { display: block !important; }
+}
+
+/* --- Page not found: three red referee lamps ("no lift") --------------------------- */
+
+.notfound { padding: 56px 0 24px; }
+.lamps { display: flex; gap: 16px; margin-bottom: 22px; }
+.lamps span {
+  width: clamp(48px, 9vw, 76px); aspect-ratio: 1; border-radius: 50%;
+  background: var(--miss); border: 4px solid var(--ink); box-shadow: var(--shadow-hard);
+}
+.notfound h1 { font-size: clamp(48px, 10vw, 112px); color: var(--burgundy); margin: 6px 0 14px; }
+.notfound p { font-size: 18px; color: var(--ink-2); margin: 0 0 6px; }
+.notfound .ways { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 18px; font-weight: 700; }
+
+/* --- Print: a competition (or any page) as a clean protocol sheet ------------------ */
+
+@media print {
+  @page { margin: 14mm 12mm; }
+  body { background: #fff; background-image: none; font-size: 10.5pt; }
+  .wrap { max-width: none; padding: 0; }
+  .masthead nav, .footer, .search, .logo-wheel, .filters, .data-filters, .btn, .more,
+  .link-button, .slider { display: none !important; }
+  .masthead { border-bottom-width: 2px; }
+  .masthead .wrap { padding: 0 0 6px; }
+  .logo { font-size: 20pt; }
+  main::after {
+    content: "Pløk og Døk · data fra vlstat.dk og vaegtloeftning.dk";
+    display: block; margin-top: 18px; padding-top: 6px; border-top: 1px solid var(--ink);
+    font-size: 9pt; color: var(--ink-2);
+  }
+
+  .section { margin: 20px 0; }
+  .profile-head { padding: 14px 0 12px; }
+  .profile-head h1 { font-size: 30pt; }
+  h2 { font-size: 18pt; }
+  h2, h3, .section-head, .class-head, .podium-head { break-after: avoid; }
+  tr, .plate, .podium a, .oddity, .hitboard, .recboard, .chart-box, .agechart { break-inside: avoid; }
+  thead { display: table-header-group; }  /* repeat the column heads on every sheet */
+
+  .table-wrap { overflow: visible; }
+  th { background: none; }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); }
+  tbody tr:hover td { background: none; }
+  a { text-decoration: none; }
+
+  /* Colour may not survive the printer, so a missed attempt is also light and italic.
+     Print only: on screen, made and missed differ by colour alone. */
+  .att.miss { font-weight: 400; font-style: italic; }
+  /* Records further down the page haven't been drawn in yet; on paper they all show. */
+  .is-pr.pr-wait::after { transform: none; }
+  .is-pr.pr-draw::after { animation: none; }
+
+  /* No ink-heavy blocks or offset shadows on paper. */
+  .plate, .recboard, .lamps span { box-shadow: none; }
+  .plate.brand { background: none; color: var(--ink); }
+  .plate.brand .kicker, .plate.brand .value small, .plate.brand .note { color: var(--ink-2); }
+  .recboard { --chalk: var(--ink-2); --chalk-rule: var(--rule-soft); background: none; color: var(--ink); }
+  .recboard .rl { color: var(--ink); }
+  .recboard .sin .v { color: var(--burgundy); }
 }

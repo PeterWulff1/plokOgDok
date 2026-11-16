@@ -23,3 +23,19 @@ def test_page_file():
     assert page_file(out, "/") == out / "index.html"
     assert page_file(out, "/kalender") == out / "kalender.html"
     assert page_file(out, "/loefter/7") == out / "loefter" / "7.html"
+
+
+def test_not_found_page_is_written_for_github_pages(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app import main as app_main
+    from scripts.build_static import _render_not_found
+
+    monkeypatch.setattr(app_main.queries, "open_pool", lambda url=None: None)
+    monkeypatch.setattr(app_main.queries, "close_pool", lambda: None)
+    monkeypatch.setattr(app_main.admin_store, "close_pool", lambda: None)
+    with TestClient(app_main.app) as client:
+        assert _render_not_found(client, tmp_path, "/plokOgDok") == []
+    html = (tmp_path / "404.html").read_text(encoding="utf-8")
+    assert "Ikke godkendt" in html and 'href="/plokOgDok/#sog"' in html
+    assert 'src="/plokOgDok/static/js/site.js' in html

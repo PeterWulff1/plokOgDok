@@ -9,6 +9,8 @@
   <meta name="robots" content="noindex, nofollow">
   <title>{% block title %}Pløk og Døk{% endblock %}</title>
   <meta name="description" content="{% block description %}Statistik for dansk vægtløftning siden 2019: løfterprofiler, stævner, hit-rates og personlige rekorder.{% endblock %}">
+  <meta name="theme-color" content="#800020">
+  <link rel="icon" type="image/svg+xml" href="{{ static_url('favicon.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap" rel="stylesheet">
@@ -40,6 +42,7 @@
       <span>Data fra <a href="https://vlstat.dk" rel="noopener">vlstat.dk</a> og <a href="https://vaegtloeftning.dk" rel="noopener">vaegtloeftning.dk</a></span>
     </div>
   </footer>
+  <script src="{{ static_url('js/site.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

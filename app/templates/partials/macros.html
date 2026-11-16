@@ -8,7 +8,7 @@
   {%- if a is none -%}
     <span class="att none" aria-label="intet forsøg">·</span>
   {%- elif a.is_successful -%}
-    <span class="att made{% if pr %} is-pr{% endif %}" title="{{ 'Ramt · ny personlig rekord' if pr else 'Ramt' }}">{{ a.weight_kg }}<span class="visually-hidden"> ramt</span>{% if pr %}{{ pr_text() }}{% endif %}</span>
+    <span class="att made" title="{{ 'Ramt · ny personlig rekord' if pr else 'Ramt' }}">{% if pr %}<span class="is-pr">{{ a.weight_kg }}</span>{% else %}{{ a.weight_kg }}{% endif %}<span class="visually-hidden"> ramt</span>{% if pr %}{{ pr_text() }}{% endif %}</span>
   {%- else -%}
     <span class="att miss" title="Ikke ramt">{{ a.weight_kg }}<span class="visually-hidden"> ikke ramt</span></span>
   {%- endif -%}

@@ -96,6 +96,15 @@ def _render(client: TestClient, out: Path, base: str, url: str) -> list[str]:
     return [f"{url}: {label} in page text" for p, label in LEAKS if p.search(text)]
 
 
+def _render_not_found(client: TestClient, out: Path, base: str) -> list[str]:
+    """Write 404.html, which GitHub Pages serves for every address that has no file."""
+    r = client.get("/404")
+    if r.status_code != 404 or "Ikke godkendt" not in r.text:
+        return [f"/404: expected the site's 404 page, got HTTP {r.status_code}"]
+    (out / "404.html").write_text(with_base(r.text, base), encoding="utf-8")
+    return [f"/404: {label} in page text" for p, label in LEAKS if p.search(visible_text(r.text))]
+
+
 def build(out: Path, base: str, lifter_limit: int | None = None, workers: int = 8) -> list[str]:
     """Write the site to `out`. Returns the problems found (empty means publishable).
 
@@ -118,6 +127,7 @@ def build(out: Path, base: str, lifter_limit: int | None = None, workers: int = 
                 problems += job.result()
                 if i % 200 == 0:
                     print(f"  {i}/{len(urls)} pages", flush=True)
+            problems += _render_not_found(client, out, base)
             index = json.dumps(search_index(), ensure_ascii=False, separators=(",", ":"))
             (out / "sog.json").write_text(index, encoding="utf-8")
     finally:

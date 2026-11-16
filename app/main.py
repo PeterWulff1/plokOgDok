@@ -12,9 +12,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -119,6 +121,17 @@ app.include_router(admin_router)
 
 def _render(request: Request, name: str, **context) -> HTMLResponse:
     return templates.TemplateResponse(request, name, context)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def not_found_page(request: Request, exc: StarletteHTTPException):
+    """A missing page gets the site's own 404 page. Everything else (admin, static files,
+    other status codes) keeps FastAPI's plain answer."""
+    if exc.status_code != 404 or request.url.path.startswith(("/admin", "/static")):
+        return await http_exception_handler(request, exc)
+    # Routes say what is missing ("Løfteren findes ikke"); unknown URLs only say "Not Found".
+    message = exc.detail if exc.detail != "Not Found" else "Siden findes ikke"
+    return templates.TemplateResponse(request, "404.html", {"message": message}, status_code=404)
 
 
 @app.get("/", response_class=HTMLResponse)

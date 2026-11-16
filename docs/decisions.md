@@ -2,6 +2,22 @@
 
 Newest first. Each entry: date, decision, reason, consequences.
 
+## 2026-11-16 — Five small details: 404 page, tab icon, drawn record line, search keys, print
+
+**Decision:**
+- **404 page.** A missing lifter, competition, club or address gets `404.html`: three red referee lamps and "Ikke godkendt", with the route's own message below. `app.main.not_found_page` handles it; admin and static-file addresses keep the plain answer. The static build writes it as `site/404.html`, which GitHub Pages serves for every address without a file.
+- **Tab icon.** `app/static/favicon.svg`: a loaded bar, big red plates innermost and small ochre ones outside, as on the platform.
+- **Record line.** The coral line under a record is now a border on `.is-pr::after`, not `text-decoration`, so `static/js/site.js` can draw it in from the left the first time it scrolls into view. For attempts the class sits on a span around the number only, so the line is as wide as the number. Visitors who ask for reduced motion, or have no JavaScript, see the line as before.
+- **Search keys.** `/` focuses the search from any page (on other pages it goes to the front page's search), arrow keys walk the results, Enter opens the first one and Escape clears.
+- **Print.** `@media print` hides navigation, filters and buttons, drops shadows and dark blocks, repeats table heads on each sheet and ends with a source line.
+
+**Reason:** The user asked for small details that don't rebuild existing pages. A missing page used to show a raw JSON message, and the static site had no 404 page at all.
+
+**Consequences:**
+- In print only, a missed attempt is light and italic as well as coloured. On screen the rule stands: made and missed differ by colour alone.
+- `site.js` loads on every page. It must stay optional: nothing may depend on it to be readable.
+- None of this adds numbers; there are no new views or queries.
+
 ## 2026-11-16 — Security hardening after a review (migration 020)
 
 **Decision:**

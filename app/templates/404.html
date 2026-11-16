@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Siden findes ikke · Pløk og Døk{% endblock %}
+
+{% block content %}
+{# Three red lamps: the referees' signal for a lift that didn't count. #}
+<section class="notfound">
+  <div class="lamps" aria-hidden="true"><span></span><span></span><span></span></div>
+  <p class="kicker">Fejl 404</p>
+  <h1>Ikke godkendt</h1>
+  <p>{{ message }}.</p>
+  <div class="ways">
+    <a href="/#sog">Søg efter en løfter</a>
+    <a href="/#staevner">Seneste stævner</a>
+    <a href="/kalender">Kalender</a>
+  </div>
+</section>
+{% endblock %}
